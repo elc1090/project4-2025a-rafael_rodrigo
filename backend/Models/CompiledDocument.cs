@@ -18,4 +18,9 @@ public class CompiledDocument {
     /// O id do usuario que criou o documento.
     /// </summary>
     public Guid UserId { get; set; }
+    
+    /// <summary>
+    /// Horario que o documento foi criado.
+    /// </summary>
+    public DateTime Created { get; set; }
 }
