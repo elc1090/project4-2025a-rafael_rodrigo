@@ -10,9 +10,9 @@ namespace backend.Controllers {
     [ApiController]
     public class UserController : ControllerBase {
 
-        private readonly DatabaseService db;
+        private readonly UserService db;
 
-        public UserController(DatabaseService db)
+        public UserController(UserService db)
         {
             this.db = db;
         }
@@ -29,7 +29,7 @@ namespace backend.Controllers {
             if(user is null) {
                 // criar usuario
                 User u = new() {
-                    AuthToken = DatabaseService.GenerateAuthToken(),
+                    AuthToken = UserService.GenerateAuthToken(),
                     Id = Guid.NewGuid(),
                     Password = password,
                     Name = username,
@@ -52,7 +52,7 @@ namespace backend.Controllers {
             // gerar token se necessario
             string? token = db.GetUserToken(user.Id);
             if(token is null) {
-                token = DatabaseService.GenerateAuthToken();
+                token = UserService.GenerateAuthToken();
                 db.SetUserToken(user.Id, token);
             }
 

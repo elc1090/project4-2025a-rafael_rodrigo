@@ -9,7 +9,7 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-builder.Services.AddSingleton<DatabaseService>();
+ConfigureServices(builder.Services);
 
 builder.Services.AddCors(options =>
 {
@@ -36,3 +36,9 @@ app.UseCors();
 app.MapControllers();
 
 app.Run();
+
+static void ConfigureServices(IServiceCollection services)
+{
+    services.AddSingleton<UserService>();
+    services.AddSingleton<DocumentService>();
+}

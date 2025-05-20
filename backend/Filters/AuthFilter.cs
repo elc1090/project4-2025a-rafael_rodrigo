@@ -9,9 +9,9 @@ namespace backend.Filters;
 /// </summary>
 public class AuthFilter : IAsyncActionFilter {
 
-    private readonly DatabaseService db;
+    private readonly UserService db;
 
-    public AuthFilter(DatabaseService db) {
+    public AuthFilter(UserService db) {
         this.db = db;
     }
 
