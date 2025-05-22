@@ -40,7 +40,8 @@ public class UserController : ControllerBase {
 
             return Ok(new LoginResult() {
                 AuthToken = u.AuthToken,
-                NewAccount = true
+                NewAccount = true,
+                Name = u.Name
             });
         }
 
@@ -60,7 +61,8 @@ public class UserController : ControllerBase {
         // retornar token
         return Ok(new LoginResult() {
             AuthToken = token,
-            NewAccount = false
+            NewAccount = false,
+            Name = user.Name
         });                
     }
 

@@ -15,4 +15,5 @@ public class LoginResult {
     /// Define se essa requisicao criou um usuario ou apenas logou.
     /// </summary>
     public required bool NewAccount { get; set; }
+    public required string Name { get; set; }
 }
