@@ -211,7 +211,6 @@ public class DocumentService
 
             var headers = new Dictionary<string, string>
             {
-                { "Content-Type", "application/x-md" },
                 { "output-type", "pdf" },
                 { "render", "pandoc" },
             };
@@ -240,7 +239,6 @@ public class DocumentService
 
             var headers = new Dictionary<string, string>
             {
-                { "Content-Type", "application/x-tex" },
                 { "snippet", "false" },
                 { "debug", "false" },
             };
