@@ -202,7 +202,7 @@ public class DocumentService
             return null;
         }
 
-        string compilerBaseUrl = "http://localhost:14730/compile";
+        string compilerBaseUrl = "http://latex-processor/compile";
         HttpMethod method = HttpMethod.Post;
         DocumentLanguage lang = metadata.Language;
 
