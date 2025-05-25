@@ -109,9 +109,7 @@ public class DocumentService
         col.Insert(document);
         
         var fs = database.GetStorage<Guid>();
-        var fileinfo = fs.Upload(document.Id, document.Name);
-        using var ws = fileinfo.OpenWrite();
-        content.CopyTo(ws);
+        var fileinfo = fs.Upload(document.Id, document.Name, content);
     }
     
     /// <summary>
