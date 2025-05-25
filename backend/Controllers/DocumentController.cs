@@ -105,7 +105,6 @@ public class DocumentController : ControllerBase
         }
         
         CompiledDocument compiled = docService.UploadDocument(meta, fileStream);
-        docService.RemoveDocumentMetadata(documentId);
         
         return Ok(new { documentId = compiled.Id });
     }

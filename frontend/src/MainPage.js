@@ -78,6 +78,7 @@ function NewDocumentForm({ token, onDocumentCreated }) {
     const handleSubmit = async (e) => {
         e.preventDefault();
         setStatus('Registrando documento...');
+        const languageEnum = language === 'Markdown' ? 1 : language === 'Latex' ? 2 : 0;
         // 1. Registrar metadados
         const res = await fetch('http://web-t3-api.rodrigoappelt.com:8080/api/Document/register', {
             method: 'POST',
@@ -85,7 +86,7 @@ function NewDocumentForm({ token, onDocumentCreated }) {
                 'Content-Type': 'application/json',
                 'Authorization': 'Bearer ' + token
             },
-            body: JSON.stringify({ name, language })
+            body: JSON.stringify({ name, language: languageEnum })
         });
         if (!res.ok) {
             console.error('Erro ao registrar documento:', res);
@@ -94,12 +95,15 @@ function NewDocumentForm({ token, onDocumentCreated }) {
         }
         const { documentId } = await res.json();
         setStatus('Enviando arquivo...');
-        // 2. Upload do arquivo
         const formData = new FormData();
         formData.append('file', file);
-        const uploadRes = await fetch(`http://web-t3-api.rodrigoappelt.com:8080/api/Document/upload/${documentId}`, {
+        // Envie o arquivo pelo body como multipart/form-data (já está correto)
+        const uploadRes = await fetch(`http://web-t3-api.rodrigoappelt.com:8080/api/document/upload/${documentId}`, {
             method: 'POST',
-            headers: { 'Authorization': 'Bearer ' + token },
+            headers: {
+                'Authorization': 'Bearer ' + token
+                // NÃO defina 'Content-Type' aqui!
+            },
             body: formData
         });
         if (!uploadRes.ok) {
