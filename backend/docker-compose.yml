@@ -1,0 +1,19 @@
+version: "3"
+
+services:
+  latex-processor:
+    image: agentew04/latex-processor:1.3
+    container_name: latex-processor
+    restart: always
+    ports:
+      - "14730:80"
+  aspnet-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: aspnet-api
+    depends_on:
+      - latex-processor
+    ports:
+      - "21209:8080"
+    restart: always  
