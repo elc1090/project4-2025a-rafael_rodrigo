@@ -49,6 +49,15 @@ public class DocumentService
             .ToList();
     }
 
+    public CompiledDocument? GetDocument(Guid documentId) {
+        var col = database.GetCollection<CompiledDocument>();
+        col.EnsureIndex(x => x.Id);
+        CompiledDocument? doc = col.Query()
+            .Where(x => x.Id == documentId)
+            .FirstOrDefault();
+        return doc;
+    }
+
     /// <summary>
     /// Retorna uma <see cref="MemoryStream"/> com o conteudo deste documento.
     /// </summary>

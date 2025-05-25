@@ -41,6 +41,20 @@ public class DocumentController : ControllerBase
         return Ok(paginatedDocuments);
     }
 
+    [HttpGet("{documentId:guid}")]
+    public IActionResult GetDocument(Guid documentId) {
+        CompiledDocument? document = docService.GetDocument(documentId);
+        if (document is null) {
+            return NotFound("Documento nao encontrado");
+        }
+        Stream? documentStream = docService.GetDocumentContent(documentId);
+        if (documentStream is null) {
+            return NotFound("Documento nao encontrado");
+        }
+        // documentStream is disposed by File()
+        return File(documentStream, "application/octet-stream", $"{document.Name}-{documentId.ToByteArray()[..4]:X2}.pdf");
+    }
+
     [Authenticated]
     [HttpPost("register")]
     public IActionResult RegisterDocument([FromBody] RegisterDocumentForm documentRegistration)
