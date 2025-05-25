@@ -19,6 +19,11 @@ public sealed class UserService : IDisposable {
         Database.Dispose();
     }
 
+    public void Flush() {
+        Database.Dispose();
+        Database = new LiteDatabase(DatabasePath);
+    }
+
     /// <summary>
     /// Adiciona um usuario ao banco de dados.
     /// </summary>

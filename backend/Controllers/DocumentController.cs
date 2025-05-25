@@ -89,7 +89,7 @@ public class DocumentController : ControllerBase
         {
             return Unauthorized("Usuario nao encontrado");
         }
-        RawDocument? meta = docService.GetDocumentMetadata(userId);
+        RawDocument? meta = docService.GetDocumentMetadata(documentId);
         if (meta is null)
         {
             return NotFound("Documento nao encontrado");
@@ -105,7 +105,8 @@ public class DocumentController : ControllerBase
         }
         
         CompiledDocument compiled = docService.UploadDocument(meta, fileStream);
-        
+        docService.RemoveDocumentMetadata(documentId);
+
         return Ok(new { documentId = compiled.Id });
     }
 }
