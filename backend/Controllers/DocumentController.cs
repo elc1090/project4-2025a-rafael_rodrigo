@@ -95,6 +95,11 @@ public class DocumentController : ControllerBase
             return NotFound("Documento nao encontrado");
         }
 
+        // verifica se o documento pertence ao usuario
+        if (meta.Owner != userId) {
+            return Unauthorized("Usuario nao autorizado a fazer upload deste documento");
+        }
+
         Stream fileStream = file.OpenReadStream();
         // compilar o arquivo
         Stream? compiledStream = await docService.CompileDocument(documentId, fileStream);
