@@ -106,7 +106,14 @@ public class DocumentService
         
         var col = database.GetCollection<CompiledDocument>();
         col.EnsureIndex(x => x.UserId);
-        col.Insert(document);
+        try {
+            col.Insert(document);
+        } catch (LiteException) {
+            // deu algo errado na parte do servidor, esse arquivo ja existe
+            // talvez falhou da ultima vez. deletamos a anterior pq sim e substitui por essa
+            col.Delete(document.Id);
+            col.Insert(document);
+        }
         
         var fs = database.GetStorage<Guid>();
         var fileinfo = fs.Upload(document.Id, document.Name, content);
