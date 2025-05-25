@@ -103,13 +103,13 @@ public class DocumentController : ControllerBase
         Stream fileStream = file.OpenReadStream();
         // compilar o arquivo
         Stream? compiledStream = await docService.CompileDocument(documentId, fileStream);
-        fileStream.Close();
+        fileStream.Dispose();
         if (compiledStream is null)
         {
             return BadRequest("Erro ao compilar o documento");
         }
         
-        CompiledDocument compiled = docService.UploadDocument(meta, fileStream);
+        CompiledDocument compiled = docService.UploadDocument(meta, compiledStream);
         docService.RemoveDocumentMetadata(documentId);
 
         return Ok(new { documentId = compiled.Id });
