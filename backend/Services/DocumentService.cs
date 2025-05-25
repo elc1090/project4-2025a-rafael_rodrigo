@@ -212,7 +212,6 @@ public class DocumentService
             var headers = new Dictionary<string, string>
             {
                 { "output-type", "pdf" },
-                { "render", "pandoc" },
             };
             var fileContent = new StreamContent(input);
             fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/x-md");
