@@ -77,7 +77,7 @@ public class DocumentController : ControllerBase
     
     [Authenticated]
     [HttpPost("upload/{documentId:guid}")]
-    public IActionResult UploadDocument(Guid documentId, IFormFile file)
+    public async Task<IActionResult> UploadDocument(Guid documentId, IFormFile file)
     {
         if (file.Length == 0)
         {
@@ -97,7 +97,7 @@ public class DocumentController : ControllerBase
 
         Stream fileStream = file.OpenReadStream();
         // compilar o arquivo
-        Stream? compiledStream = docService.CompileDocument(documentId, fileStream);
+        Stream? compiledStream = await docService.CompileDocument(documentId, fileStream);
         fileStream.Close();
         if (compiledStream is null)
         {

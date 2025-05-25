@@ -1,5 +1,6 @@
 ﻿using backend.Models;
 using LiteDB;
+using System.Net;
 
 namespace backend.Services;
 
@@ -9,10 +10,12 @@ namespace backend.Services;
 public class DocumentService
 {
     private readonly LiteDatabase database;
+    private readonly HttpClient httpClient;
     
-    public DocumentService(UserService userService)
+    public DocumentService(UserService userService, HttpClient httpClient)
     {
         database = userService.Database;
+        this.httpClient = httpClient;
     }
 
     /// <summary>
@@ -190,7 +193,7 @@ public class DocumentService
     /// <param name="documentId">O id do documento a ser compilado</param>
     /// <param name="input">O conteudo do arquivo de entrada</param>
     /// <returns>Uma stream com o resultado ou null se o arquivo nao existe</returns>
-    public Stream? CompileDocument(Guid documentId, Stream input)
+    public async Task<Stream?> CompileDocument(Guid documentId, Stream input)
     {
         RawDocument? metadata = GetDocumentMetadata(documentId);
         if (metadata is null)
@@ -198,11 +201,68 @@ public class DocumentService
             return null;
         }
 
+        string compilerBaseUrl = "http://localhost:14730/compile";
+        HttpMethod method = HttpMethod.Post;
         DocumentLanguage lang = metadata.Language;
-        // TODO: compilacao remota
-        MemoryStream ms = new();
-        input.CopyTo(ms);
-        ms.Position = 0;
-        return ms;
+
+        if(lang == DocumentLanguage.Markdown) {
+            string url = compilerBaseUrl + "/markdown";
+
+            var headers = new Dictionary<string, string>
+            {
+                { "Content-Type", "application/x-md" },
+                { "output-type", "pdf" },
+                { "render", "pandoc" },
+            };
+            var fileContent = new StreamContent(input);
+            fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/x-md");
+            var request = new HttpRequestMessage(method, url) {
+                Content = fileContent
+            };
+            foreach (var header in headers) {
+                request.Headers.Add(header.Key, header.Value);
+            }
+
+            var response = await httpClient.SendAsync(request);
+            if (response.StatusCode != HttpStatusCode.OK) {
+                Console.WriteLine($"Erro ao compilar o documento: {response.StatusCode}. " +
+                    $"Message: " + await response.Content.ReadAsStringAsync());
+                return null;
+            }
+
+            var responseStream = await response.Content.ReadAsStreamAsync();
+            return responseStream;
+
+
+        } else if(lang == DocumentLanguage.Latex) {
+            string url = compilerBaseUrl + "/latex";
+
+            var headers = new Dictionary<string, string>
+            {
+                { "Content-Type", "application/x-tex" },
+                { "snippet", "false" },
+                { "debug", "false" },
+            };
+            var fileContent = new StreamContent(input);
+
+            fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/x-tex");
+            var request = new HttpRequestMessage(method, url) {
+                Content = fileContent
+            };
+            foreach (var header in headers) {
+                request.Headers.Add(header.Key, header.Value);
+            }
+            var response = await httpClient.SendAsync(request);
+
+            if (response.StatusCode != HttpStatusCode.OK) {
+                Console.WriteLine($"Erro ao compilar o documento: {response.StatusCode}. " +
+                    $"Message: " + await response.Content.ReadAsStringAsync());
+                return null;
+            }
+            var responseStream = await response.Content.ReadAsStreamAsync();
+            return responseStream;
+        } else {
+            return null;
+        }
     }
 }
