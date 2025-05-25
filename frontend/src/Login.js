@@ -10,7 +10,7 @@ function Login({ onLogin }) {
     setError('');
     try {
         const response = await fetch(
-            `http://localhost:5083/api/User/login?username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`,
+            `http://web-t3-api.rodrigoappelt.com:8080/api/User/login?username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`,
             {
                 method: 'GET',
                 headers: { 'Content-Type': 'application/json' }

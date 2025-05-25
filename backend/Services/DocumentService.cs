@@ -144,7 +144,8 @@ public class DocumentService
             Owner = owner,
             Name = name,
             Language = language
-        };
+        }; 
+        Console.WriteLine($"Document {doc.Id} registered");
         col.Insert(doc);
         return doc.Id;
     }
