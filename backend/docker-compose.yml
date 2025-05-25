@@ -16,4 +16,6 @@ services:
       - latex-processor
     ports:
       - "21209:8080"
+    volumes:
+      - ./data-volume:/app/Data
     restart: always  

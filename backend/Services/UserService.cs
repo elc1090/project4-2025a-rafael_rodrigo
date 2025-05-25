@@ -3,7 +3,7 @@ using LiteDB;
 
 namespace backend.Services;
 public sealed class UserService : IDisposable {
-    private const string DatabasePath = "./Database.db";
+    private const string DatabasePath = "./Data/Database.db";
 
     public LiteDatabase Database { get; private set; }
     
