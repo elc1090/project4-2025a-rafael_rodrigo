@@ -97,4 +97,22 @@ public class UserController : ControllerBase {
             id
         });
     }
+
+    [Authenticated]
+    [HttpGet("me")]
+    public IActionResult GetCurrentUser() {
+        Guid userId = (Guid)HttpContext.Items["UserId"];
+
+        var user = db.GetUser(userId);
+        if(user == null) {
+            return NotFound();
+        }
+
+        return Ok(new {
+            user.Id,
+            user.Name,
+            user.CreatedAt,
+            user.UpdatedAt
+        });
+    }
 }
