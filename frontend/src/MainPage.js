@@ -43,7 +43,7 @@ function Dashboard({ token }) {
     const [userNames, setUserNames] = useState({});
 
     useEffect(() => {
-        fetch('http://web-t3-api.rodrigoappelt.com:8080/api/document/dashboard', {
+        fetch('http://web-t3.rodrigoappelt.com:8080/api/document/dashboard', {
             headers: { 'Authorization': 'Bearer ' + token }
         })
         .then(res => res.json())
@@ -54,7 +54,7 @@ function Dashboard({ token }) {
             const namesObj = {};
             await Promise.all(userIds.map(async userId => {
                 try {
-                    const res = await fetch(`http://web-t3-api.rodrigoappelt.com:8080/api/user/${userId}`, {
+                    const res = await fetch(`http://web-t3.rodrigoappelt.com:8080/api/user/${userId}`, {
                         headers: { 'Authorization': 'Bearer ' + token }
                     });
                     if (res.ok) {
@@ -70,7 +70,7 @@ function Dashboard({ token }) {
 
     const handleDownload = (docId) => {
         console.log('Download document:', docId);
-        window.location.href = `http://web-t3-api.rodrigoappelt.com:8080/api/document/${docId}`;
+        window.location.href = `http://web-t3.rodrigoappelt.com:8080/api/document/${docId}`;
 
     };
 
@@ -102,7 +102,7 @@ function UserDocuments({ token, userId }) {
 
     useEffect(() => {
         if (!userId) return;
-        fetch(`http://web-t3-api.rodrigoappelt.com:8080/api/Document/user/${userId}`, {
+        fetch(`http://web-t3.rodrigoappelt.com:8080/api/Document/user/${userId}`, {
             headers: { 'Authorization': 'Bearer ' + token }
         })
         .then(res => res.json())
@@ -112,7 +112,7 @@ function UserDocuments({ token, userId }) {
 
     const handleDownload = (docId) => {
         console.log('Download document:', docId);
-        window.location.href = `http://web-t3-api.rodrigoappelt.com:8080/api/document/${docId}`;
+        window.location.href = `http://web-t3.rodrigoappelt.com:8080/api/document/${docId}`;
     };
 
     return (
@@ -156,7 +156,7 @@ function NewDocumentForm({ token, onDocumentCreated }) {
             const languageEnum = language === 'Markdown' ? 1 : 2;
             
             // 1. Registrar metadados
-            const res = await fetch('http://web-t3-api.rodrigoappelt.com:8080/api/Document/register', {
+            const res = await fetch('http://web-t3.rodrigoappelt.com:8080/api/Document/register', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -176,7 +176,7 @@ function NewDocumentForm({ token, onDocumentCreated }) {
             const formData = new FormData();
             formData.append('file', file);
             
-            const uploadRes = await fetch(`http://web-t3-api.rodrigoappelt.com:8080/api/document/upload/${documentId}`, {
+            const uploadRes = await fetch(`http://web-t3.rodrigoappelt.com:8080/api/document/upload/${documentId}`, {
                 method: 'POST',
                 headers: { 'Authorization': 'Bearer ' + token },
                 body: formData
@@ -267,7 +267,7 @@ function MainPage({ onLogout }) {
     useEffect(() => {
         // Busca dados do usuário autenticado
         if (!token) return;
-        fetch('http://web-t3-api.rodrigoappelt.com:8080/api/user/me', {
+        fetch('http://web-t3.rodrigoappelt.com:8080/api/user/me', {
             headers: {
                 'Authorization': 'Bearer ' + token
             }
