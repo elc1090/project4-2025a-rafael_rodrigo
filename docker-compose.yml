@@ -7,9 +7,10 @@ services:
     restart: always
     ports:
       - "14730:80"
+      
   aspnet-api:
     build:
-      context: .
+      context: ./backend
       dockerfile: Dockerfile
     container_name: aspnet-api
     depends_on:
@@ -19,3 +20,15 @@ services:
     volumes:
       - ./data-volume:/app/Data
     restart: always  
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: cra-frontend
+    depends_on:
+      - aspnet-api
+    ports:
+      - "47479:80"
+    restart: always
+
