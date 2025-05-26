@@ -23,6 +23,7 @@ function DocumentItem({ doc, onDownload, userName }) {
         <li className="document-item">
             <div>
                 <span className="document-name">{doc.name}</span>
+                <span style={{ margin: '0 8px', color: '#888' }}>•</span>
                 <span className="document-date">
                     {new Date(doc.created).toLocaleString()} • {userName || 'Usuário'}
                 </span>
@@ -76,7 +77,7 @@ function Dashboard({ token }) {
     return (
         console.log('Rendering Dashboard with docs:', docs),
         <section className="features-section">
-            <h3 className="section-title">Documentos Recentes da Comunidade</h3>
+            <h3 className="section-title">Documentos recentes da comunidade</h3>
             {loading ? (
                 <div>Carregando...</div>
             ) : (
@@ -116,7 +117,7 @@ function UserDocuments({ token, userId }) {
 
     return (
         <section className="features-section">
-            <h3 className="section-title">Meus Documentos</h3>
+            <h3 className="section-title">Meus documentos</h3>
             {loading ? (
                 <div>Carregando...</div>
             ) : docs.length > 0 ? (
@@ -202,7 +203,7 @@ function NewDocumentForm({ token, onDocumentCreated }) {
             <h3 className="section-title">Novo Documento</h3>
             <form className="upload-form" onSubmit={handleSubmit}>
                 <div className="form-group">
-                    <label htmlFor="doc-name">Nome do Documento</label>
+                    <label htmlFor="doc-name">Nome do documento</label>
                     <input
                         id="doc-name"
                         type="text"
@@ -244,7 +245,7 @@ function NewDocumentForm({ token, onDocumentCreated }) {
                 </div>
                 
                 <button type="submit" className="submit-btn" disabled={!file}>
-                    Enviar para Compilação
+                    Enviar para compilação
                 </button>
                 
                 {status.message && (
@@ -298,13 +299,13 @@ function MainPage({ onLogout }) {
                         className={`tab ${activeTab === 'upload' ? 'active' : ''}`}
                         onClick={() => setActiveTab('upload')}
                     >
-                        Novo Upload
+                        Novo upload
                     </div>
                     <div 
                         className={`tab ${activeTab === 'my-docs' ? 'active' : ''}`}
                         onClick={() => setActiveTab('my-docs')}
                     >
-                        Meus Documentos
+                        Meus documentos
                     </div>
                     <div 
                         className={`tab ${activeTab === 'community' ? 'active' : ''}`}
