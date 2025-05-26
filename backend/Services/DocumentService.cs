@@ -9,14 +9,16 @@ namespace backend.Services;
 /// </summary>
 public class DocumentService
 {
-    private readonly LiteDatabase database;
+    private readonly UserService userService;
     private readonly HttpClient httpClient;
     
     public DocumentService(UserService userService, HttpClient httpClient)
     {
-        database = userService.Database;
+        this.userService = userService;
         this.httpClient = httpClient;
     }
+
+    private LiteDatabase database => userService.Database;
 
     /// <summary>
     /// Retorna todos os documentos do banco de dados.
