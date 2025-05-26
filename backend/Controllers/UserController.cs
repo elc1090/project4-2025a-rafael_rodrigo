@@ -78,4 +78,23 @@ public class UserController : ControllerBase {
         db.SetUserPassword(userId, newpassword);
         return Ok("Senha alterada com sucesso");
     }
+
+    /// <summary>
+    /// Retorna o Id unico de um usuario
+    /// </summary>
+    /// <param name="username">O nome do usuario</param>
+    /// <returns></returns>
+    [HttpGet("id")]
+    public IActionResult GetUserId(string username) {
+
+        var id = db.GetUserId(username);
+
+        if(id is null) {
+            return NotFound();
+        }
+
+        return Ok(new {
+            id
+        });
+    }
 }
