@@ -235,16 +235,26 @@ function NewDocumentForm({ token, onDocumentCreated }) {
 
 function MainPage({ onLogout }) {
     const [userId, setUserId] = useState(null);
-    const [userName, setUserName] = useState('Usuário Teste'); // Substituir por dados reais
+    const [userName, setUserName] = useState('');
     const token = localStorage.getItem('token');
     const [activeTab, setActiveTab] = useState('upload');
 
-    // Recupera userId e userName do token (simulação)
     useEffect(() => {
-        // Simulação - substituir por chamada real à API
-        setUserId(1);
-        setUserName('João Silva');
-    }, []);
+        // Busca dados do usuário autenticado
+        if (!token) return;
+        fetch('http://web-t3-api.rodrigoappelt.com:8080/api/user/me', {
+            headers: {
+                'Authorization': 'Bearer ' + token
+            }
+        })
+        .then(res => res.ok ? res.json() : null)
+        .then(data => {
+            if (data) {
+                setUserId(data.id);
+                setUserName(data.name);
+            }
+        });
+    }, [token]);
 
     // Atualiza lista de documentos do usuário após upload
     const [refresh, setRefresh] = useState(0);
@@ -254,7 +264,7 @@ function MainPage({ onLogout }) {
             <Header onLogout={onLogout} userName={userName} />
             
             <section className="welcome-section">
-                <h2>Bem-vindo ao TexCompiler, {userName}!</h2>
+                <h2>Bem-vindo ao TexCompiler, {userName || 'Usuário'}!</h2>
                 <p>Envie seus arquivos LaTeX ou Markdown e receba o PDF compilado em instantes.</p>
             </section>
             
