@@ -98,6 +98,10 @@ public class UserController : ControllerBase {
         });
     }
 
+    /// <summary>
+    /// Retorna informacoes sobre o usuario que esta atualmente logado
+    /// </summary>
+    /// <returns>Informacoes do usuario</returns>
     [Authenticated]
     [HttpGet("me")]
     public IActionResult GetCurrentUser() {
@@ -113,6 +117,24 @@ public class UserController : ControllerBase {
             user.Name,
             user.CreatedAt,
             user.UpdatedAt
+        });
+    }
+
+    /// <summary>
+    /// Retorna informacoes sobre um usuario especifico dado o seu Id.
+    /// </summary>
+    /// <param name="userId"></param>
+    /// <returns></returns>
+    [HttpGet("{userId:guid}")]
+    public IActionResult GetUser(Guid userId) {
+        var user = db.GetUser(userId);
+        if (user is null) {
+            return NotFound("Usuario nao encontrado");
+        }
+        return Ok(new {
+            user.Id,
+            user.Name,
+            info = "nao retorna datas pois seria violacao de seguranca"
         });
     }
 }
