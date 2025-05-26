@@ -6,7 +6,7 @@ function Header({ onLogout, userName }) {
     
     return (
         <header className="main-header">
-            <h1 className="header-title">TexCompiler</h1>
+            <h1 className="header-title">TexTogether</h1>
             <div className="header-nav">
                 <div className="user-profile">
                     <div className="user-avatar">{initials}</div>
@@ -18,13 +18,14 @@ function Header({ onLogout, userName }) {
     );
 }
 
-function DocumentItem({ doc, onDownload }) {
+function DocumentItem({ doc, onDownload, userName }) {
     return (
         <li className="document-item">
             <div>
                 <span className="document-name">{doc.name}</span>
+                <span style={{ margin: '0 8px', color: '#888' }}>•</span>
                 <span className="document-date">
-                    {new Date(doc.created).toLocaleString()} • {doc.language === 2 ? 'LaTeX' : 'Markdown'}
+                    {new Date(doc.created).toLocaleString()} • {userName || 'Usuário'}
                 </span>
             </div>
             <div className="document-actions">
@@ -39,13 +40,31 @@ function DocumentItem({ doc, onDownload }) {
 function Dashboard({ token }) {
     const [docs, setDocs] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [userNames, setUserNames] = useState({});
 
     useEffect(() => {
         fetch('http://web-t3-api.rodrigoappelt.com:8080/api/document/dashboard', {
             headers: { 'Authorization': 'Bearer ' + token }
         })
         .then(res => res.json())
-        .then(setDocs)
+        .then(async docsData => {
+            setDocs(docsData);
+            // Busca nomes dos usuários para cada documento
+            const userIds = [...new Set(docsData.map(doc => doc.userId))];
+            const namesObj = {};
+            await Promise.all(userIds.map(async userId => {
+                try {
+                    const res = await fetch(`http://web-t3-api.rodrigoappelt.com:8080/api/user/${userId}`, {
+                        headers: { 'Authorization': 'Bearer ' + token }
+                    });
+                    if (res.ok) {
+                        const data = await res.json();
+                        namesObj[userId] = data.name;
+                    }
+                } catch {}
+            }));
+            setUserNames(namesObj);
+        })
         .finally(() => setLoading(false));
     }, [token]);
 
@@ -56,14 +75,20 @@ function Dashboard({ token }) {
     };
 
     return (
+        console.log('Rendering Dashboard with docs:', docs),
         <section className="features-section">
-            <h3 className="section-title">Documentos Recentes da Comunidade</h3>
+            <h3 className="section-title">Documentos recentes da comunidade</h3>
             {loading ? (
                 <div>Carregando...</div>
             ) : (
                 <ul className="document-list">
                     {docs.map(doc => (
-                        <DocumentItem key={doc.id} doc={doc} onDownload={handleDownload} />
+                        <DocumentItem
+                            key={doc.id}
+                            doc={doc}
+                            onDownload={handleDownload}
+                            userName={userNames[doc.userId]}
+                        />
                     ))}
                 </ul>
             )}
@@ -92,7 +117,7 @@ function UserDocuments({ token, userId }) {
 
     return (
         <section className="features-section">
-            <h3 className="section-title">Meus Documentos</h3>
+            <h3 className="section-title">Meus documentos</h3>
             {loading ? (
                 <div>Carregando...</div>
             ) : docs.length > 0 ? (
@@ -178,7 +203,7 @@ function NewDocumentForm({ token, onDocumentCreated }) {
             <h3 className="section-title">Novo Documento</h3>
             <form className="upload-form" onSubmit={handleSubmit}>
                 <div className="form-group">
-                    <label htmlFor="doc-name">Nome do Documento</label>
+                    <label htmlFor="doc-name">Nome do documento</label>
                     <input
                         id="doc-name"
                         type="text"
@@ -220,7 +245,7 @@ function NewDocumentForm({ token, onDocumentCreated }) {
                 </div>
                 
                 <button type="submit" className="submit-btn" disabled={!file}>
-                    Enviar para Compilação
+                    Enviar para compilação
                 </button>
                 
                 {status.message && (
@@ -264,7 +289,7 @@ function MainPage({ onLogout }) {
             <Header onLogout={onLogout} userName={userName} />
             
             <section className="welcome-section">
-                <h2>Bem-vindo ao TexCompiler, {userName || 'Usuário'}!</h2>
+                <h2>Bem-vindo ao TexTogether, {userName || 'Usuário'}!</h2>
                 <p>Envie seus arquivos LaTeX ou Markdown e receba o PDF compilado em instantes.</p>
             </section>
             
@@ -274,13 +299,13 @@ function MainPage({ onLogout }) {
                         className={`tab ${activeTab === 'upload' ? 'active' : ''}`}
                         onClick={() => setActiveTab('upload')}
                     >
-                        Novo Upload
+                        Novo upload
                     </div>
                     <div 
                         className={`tab ${activeTab === 'my-docs' ? 'active' : ''}`}
                         onClick={() => setActiveTab('my-docs')}
                     >
-                        Meus Documentos
+                        Meus documentos
                     </div>
                     <div 
                         className={`tab ${activeTab === 'community' ? 'active' : ''}`}
