@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './Login.css';
+import texIcon from './img/texIcon.png';
 
 function Login({ onLogin }) {
     const [username, setUsername] = useState('');
@@ -39,6 +40,7 @@ function Login({ onLogin }) {
     return (
         <div className="login-container">
             <div className="login-box">
+                <img src={texIcon} alt="TexTogether Icon" style={{ width: 64, height: 64, margin: '0 auto 16px', display: 'block' }} />
                 <h2 className="login-title">TexTogether</h2>
                 <form className="login-form" onSubmit={handleSubmit}>
                     <div className="form-group">
