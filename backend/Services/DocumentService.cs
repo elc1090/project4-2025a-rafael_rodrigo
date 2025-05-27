@@ -271,4 +271,17 @@ public class DocumentService
             return null;
         }
     }
+
+    public void UpdateName(Guid documentId, string newName) {
+        var col = database.GetCollection<CompiledDocument>();
+        col.EnsureIndex(x => x.Id);
+        CompiledDocument? doc = col.Query()
+            .Where(x => x.Id == documentId)
+            .FirstOrDefault();
+        if (doc is null) {
+            throw new ArgumentException("Document not found");
+        }
+        doc.Name = newName;
+        col.Update(doc);
+    }
 }

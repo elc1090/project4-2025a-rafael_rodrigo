@@ -114,4 +114,50 @@ public class DocumentController : ControllerBase
 
         return Ok(new { documentId = compiled.Id });
     }
+
+    [Authenticated]
+    [HttpGet("delete")]
+    public IActionResult DeleteDocument(Guid documentId) {
+        Guid userId = (Guid)HttpContext.Items["UserId"];
+        if (userId == Guid.Empty) {
+            return Unauthorized("Usuario nao encontrado");
+        }
+
+        var doc = docService.GetDocument(documentId);
+        if (doc is null) {
+            return NotFound("Documento nao encontrado");
+        }
+
+        // verifica se o documento pertence ao usuario
+        if (doc.UserId != userId) {
+            return Unauthorized("Usuario nao autorizado a deletar este documento");
+        }
+
+        docService.RemoveDocument(documentId);
+        
+        return Ok("Documento deletado com sucesso");
+    }
+
+    [Authenticated]
+    [HttpGet("rename")]
+    public IActionResult RenameDocument(Guid documentId, string newName) {
+        Guid userId = (Guid)HttpContext.Items["UserId"];
+        if (userId == Guid.Empty) {
+            return Unauthorized("Usuario nao encontrado");
+        }
+
+        var doc = docService.GetDocument(documentId);
+        if (doc is null) {
+            return NotFound("Documento nao encontrado");
+        }
+
+        // verifica se o documento pertence ao usuario
+        if (doc.UserId != userId) {
+            return Unauthorized("Usuario nao autorizado a renomear este documento");
+        }
+
+        docService.UpdateName(documentId, newName);
+        
+        return Ok("Documento renomeado com sucesso");
+    }
 }
