@@ -1,8 +1,8 @@
 # Projeto: TeXTogether
 
-![print do projeto]()
+![print do projeto](texTogether.png)
 
-Acesso: [https://web-t3.rodrigoappelt.com](https://web-t3.rodrigoappelt.com)
+Acesso: [http://web-t3.rodrigoappelt.com:8080](http://web-t3.rodrigoappelt.com:8080)
 
 ## Desenvolvedores
 
