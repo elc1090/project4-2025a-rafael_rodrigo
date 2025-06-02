@@ -42,4 +42,5 @@ static void ConfigureServices(IServiceCollection services)
     services.AddSingleton<UserService>();
     services.AddSingleton<DocumentService>();
     services.AddSingleton<HttpClient>();
+    services.AddSingleton<GithubService>();
 }

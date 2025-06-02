@@ -17,10 +17,23 @@ public sealed class UserService : IDisposable {
 
     public void Dispose() {
         Database.Dispose();
+        Database = null!;
     }
 
     public void Flush() {
-        Database.Dispose();
+        if (Database is not null)
+        {
+            Database.Dispose();
+        }
+        Database = new LiteDatabase(DatabasePath);
+    }
+
+    public void Enable()
+    {
+        if(Database is not null)
+        {
+            Database.Dispose();
+        }
         Database = new LiteDatabase(DatabasePath);
     }
 
