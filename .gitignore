@@ -4,3 +4,4 @@ obj/
 node_modules/
 *.db
 data-volume/
+backend/appsettings*.json
