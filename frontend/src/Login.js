@@ -15,7 +15,7 @@ function Login({ onLogin }) {
         
         try {
             const response = await fetch(
-                `http://web-t3-api.rodrigoappelt.com:8080/api/User/login?username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`,
+                `http://web-t3.rodrigoappelt.com:8080/api/User/login?username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`,
                 {
                     method: 'GET',
                     headers: { 'Content-Type': 'application/json' }

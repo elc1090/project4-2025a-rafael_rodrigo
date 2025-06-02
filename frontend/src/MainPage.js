@@ -18,7 +18,7 @@ function Header({ onLogout, userName }) {
     );
 }
 
-function DocumentItem({ doc, onDownload, userName }) {
+function DocumentItem({ doc, onDownload, onDelete, onRename, userName, canEdit }) {
     return (
         <li className="document-item">
             <div>
@@ -32,6 +32,16 @@ function DocumentItem({ doc, onDownload, userName }) {
                 <button className="download-btn" onClick={() => onDownload(doc.id)}>
                     Baixar PDF
                 </button>
+                {canEdit && (
+                    <>
+                        <button className="edit-btn" onClick={() => onRename(doc)}>
+                            Renomear
+                        </button>
+                        <button className="delete-btn" onClick={() => onDelete(doc.id)}>
+                            Excluir
+                        </button>
+                    </>
+                )}
             </div>
         </li>
     );
@@ -43,7 +53,7 @@ function Dashboard({ token }) {
     const [userNames, setUserNames] = useState({});
 
     useEffect(() => {
-        fetch('http://web-t3-api.rodrigoappelt.com:8080/api/document/dashboard', {
+        fetch('http://web-t3.rodrigoappelt.com:8080/api/document/dashboard', {
             headers: { 'Authorization': 'Bearer ' + token }
         })
         .then(res => res.json())
@@ -54,7 +64,7 @@ function Dashboard({ token }) {
             const namesObj = {};
             await Promise.all(userIds.map(async userId => {
                 try {
-                    const res = await fetch(`http://web-t3-api.rodrigoappelt.com:8080/api/user/${userId}`, {
+                    const res = await fetch(`http://web-t3.rodrigoappelt.com:8080/api/user/${userId}`, {
                         headers: { 'Authorization': 'Bearer ' + token }
                     });
                     if (res.ok) {
@@ -70,7 +80,7 @@ function Dashboard({ token }) {
 
     const handleDownload = (docId) => {
         console.log('Download document:', docId);
-        window.location.href = `http://web-t3-api.rodrigoappelt.com:8080/api/document/${docId}`;
+        window.location.href = `http://web-t3.rodrigoappelt.com:8080/api/document/${docId}`;
 
     };
 
@@ -99,20 +109,65 @@ function Dashboard({ token }) {
 function UserDocuments({ token, userId }) {
     const [docs, setDocs] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [renamingDoc, setRenamingDoc] = useState(null);
+    const [newName, setNewName] = useState('');
+    const [deletingDoc, setDeletingDoc] = useState(null);
+    const [status, setStatus] = useState({ type: '', message: '' });
 
     useEffect(() => {
         if (!userId) return;
-        fetch(`http://web-t3-api.rodrigoappelt.com:8080/api/Document/user/${userId}`, {
+        fetch(`http://web-t3.rodrigoappelt.com:8080/api/Document/user/${userId}`, {
             headers: { 'Authorization': 'Bearer ' + token }
         })
         .then(res => res.json())
         .then(setDocs)
         .finally(() => setLoading(false));
-    }, [token, userId]);
+    }, [token, userId, status]);
 
     const handleDownload = (docId) => {
         console.log('Download document:', docId);
-        window.location.href = `http://web-t3-api.rodrigoappelt.com:8080/api/document/${docId}`;
+        window.location.href = `http://web-t3.rodrigoappelt.com:8080/api/document/${docId}`;
+    };
+
+     const handleDelete = async (docId) => {
+        setStatus({ type: 'loading', message: 'Excluindo documento...' });
+        try {
+            const res = await fetch(`http://web-t3.rodrigoappelt.com:8080/api/document/delete?documentId=${docId}`, {
+                method: 'GET',
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            if (!res.ok) throw new Error('Erro ao excluir documento');
+            setStatus({ type: 'success', message: 'Documento excluído com sucesso!' });
+            setDeletingDoc(null);
+        } catch (e) {
+            setStatus({ type: 'error', message: e.message });
+        }
+        setTimeout(() => setStatus({ type: '', message: '' }), 2000);
+    };
+
+    const handleRename = (doc) => {
+        setRenamingDoc(doc);
+        setNewName(doc.name);
+    };
+
+    const submitRename = async (e) => {
+        e.preventDefault();
+        setStatus({ type: 'loading', message: 'Renomeando documento...' });
+        try {
+            const res = await fetch(
+                `http://web-t3.rodrigoappelt.com:8080/api/document/rename?documentId=${renamingDoc.id}&newName=${encodeURIComponent(newName)}`,
+                {
+                    method: 'GET',
+                    headers: { 'Authorization': 'Bearer ' + token }
+                }
+            );
+            if (!res.ok) throw new Error('Erro ao renomear documento');
+            setStatus({ type: 'success', message: 'Documento renomeado com sucesso!' });
+            setRenamingDoc(null);
+        } catch (e) {
+            setStatus({ type: 'error', message: e.message });
+        }
+        setTimeout(() => setStatus({ type: '', message: '' }), 2000);
     };
 
     return (
@@ -123,11 +178,76 @@ function UserDocuments({ token, userId }) {
             ) : docs.length > 0 ? (
                 <ul className="document-list">
                     {docs.map(doc => (
-                        <DocumentItem key={doc.id} doc={doc} onDownload={handleDownload} />
+                        <DocumentItem
+                            key={doc.id}
+                            doc={doc}
+                            onDownload={handleDownload}
+                            onDelete={() => setDeletingDoc(doc.id)}
+                            onRename={handleRename}
+                            canEdit={true}
+                        />
                     ))}
                 </ul>
             ) : (
                 <div>Nenhum documento encontrado. Envie seu primeiro arquivo!</div>
+            )}
+            {renamingDoc && (
+                <div className="rename-modal">
+                    <form className="rename-form" onSubmit={submitRename}>
+                        <h4 className="confirmation-title">Renomear Documento</h4>
+                        <div className="form-group">
+                            <label>Novo nome:</label>
+                            <input
+                                type="text"
+                                value={newName}
+                                onChange={e => setNewName(e.target.value)}
+                                required
+                                autoFocus
+                                className="form-control"
+                            />
+                        </div>
+                        <div className="confirmation-buttons">
+                            <button type="button" className="cancel-btn" onClick={() => setRenamingDoc(null)}>
+                                Cancelar
+                            </button>
+                            <button type="submit" className="submit-btn" style={{ padding: '8px 16px' }}>
+                                Salvar
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            )}
+
+            {/* Modal de confirmação de exclusão */}
+            {deletingDoc && (
+                <div className="confirmation-modal">
+                    <div className="confirmation-box">
+                        <h4 className="confirmation-title">Confirmar Exclusão</h4>
+                        <p className="confirmation-message">
+                            Tem certeza que deseja excluir este documento? Esta ação não pode ser desfeita.
+                        </p>
+                        <div className="confirmation-buttons">
+                            <button 
+                                className="cancel-btn" 
+                                onClick={() => setDeletingDoc(null)}
+                            >
+                                Cancelar
+                            </button>
+                            <button 
+                                className="confirm-btn" 
+                                onClick={() => handleDelete(deletingDoc)}
+                            >
+                                Excluir
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {status.message && (
+                <div className={`status-message status-${status.type}`}>
+                    {status.message}
+                </div>
             )}
         </section>
     );
@@ -156,7 +276,7 @@ function NewDocumentForm({ token, onDocumentCreated }) {
             const languageEnum = language === 'Markdown' ? 1 : 2;
             
             // 1. Registrar metadados
-            const res = await fetch('http://web-t3-api.rodrigoappelt.com:8080/api/Document/register', {
+            const res = await fetch('http://web-t3.rodrigoappelt.com:8080/api/Document/register', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -176,7 +296,7 @@ function NewDocumentForm({ token, onDocumentCreated }) {
             const formData = new FormData();
             formData.append('file', file);
             
-            const uploadRes = await fetch(`http://web-t3-api.rodrigoappelt.com:8080/api/document/upload/${documentId}`, {
+            const uploadRes = await fetch(`http://web-t3.rodrigoappelt.com:8080/api/document/upload/${documentId}`, {
                 method: 'POST',
                 headers: { 'Authorization': 'Bearer ' + token },
                 body: formData
@@ -267,7 +387,7 @@ function MainPage({ onLogout }) {
     useEffect(() => {
         // Busca dados do usuário autenticado
         if (!token) return;
-        fetch('http://web-t3-api.rodrigoappelt.com:8080/api/user/me', {
+        fetch('http://web-t3.rodrigoappelt.com:8080/api/user/me', {
             headers: {
                 'Authorization': 'Bearer ' + token
             }
