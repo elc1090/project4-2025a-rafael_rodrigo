@@ -128,3 +128,52 @@
 @keyframes spin {
     to { transform: translate(-50%, -50%) rotate(360deg); }
 }
+
+.login-divider {
+    text-align: center;
+    margin: 20px 0;
+    position: relative;
+}
+
+.login-divider::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: #ddd;
+}
+
+.login-divider span {
+    background: #fff;
+    color: #7f8c8d;
+    padding: 0 15px;
+    font-size: 0.9rem;
+}
+
+.github-login-btn {
+    width: 100%;
+    background: #24292e;
+    color: white;
+    border: none;
+    padding: 12px;
+    border-radius: 6px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.github-login-btn:hover {
+    background: #1b1f23;
+}
+
+.github-login-btn svg {
+    flex-shrink: 0;
+}
