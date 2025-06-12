@@ -1,16 +1,30 @@
 import React, { useState } from 'react';
 import Login from './Login';
+import Register from './Register';
 import MainPage from './MainPage';
 
 function App() {
     const [loggedIn, setLoggedIn] = useState(!!localStorage.getItem('token'));
+    const [showRegister, setShowRegister] = useState(false);
 
-    return loggedIn
-        ? <MainPage onLogout={() => {
+    if (loggedIn) {
+        return <MainPage onLogout={() => {
             localStorage.removeItem('token');
             setLoggedIn(false);
-        }} />
-        : <Login onLogin={() => setLoggedIn(true)} />;
+        }} />;
+    }
+
+    if (showRegister) {
+        return <Register 
+            onRegister={() => setLoggedIn(true)}
+            onBackToLogin={() => setShowRegister(false)}
+        />;
+    }
+
+    return <Login 
+        onLogin={() => setLoggedIn(true)}
+        onShowRegister={() => setShowRegister(true)}
+    />;
 }
 
 export default App;

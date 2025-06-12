@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import './MainPage.css';
+import DocumentEditor from './DocumentEditor';
 
 function Header({ onLogout, userName }) {
     const initials = userName ? userName.split(' ').map(n => n[0]).join('').toUpperCase() : 'U';
@@ -422,6 +423,12 @@ function MainPage({ onLogout }) {
                         Novo upload
                     </div>
                     <div 
+                        className={`tab ${activeTab === 'editor' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('editor')}
+                    >
+                        Editor
+                    </div>
+                    <div 
                         className={`tab ${activeTab === 'my-docs' ? 'active' : ''}`}
                         onClick={() => setActiveTab('my-docs')}
                     >
@@ -437,6 +444,16 @@ function MainPage({ onLogout }) {
                 
                 {activeTab === 'upload' && (
                     <NewDocumentForm 
+                        token={token} 
+                        onDocumentCreated={() => {
+                            setRefresh(r => r + 1);
+                            setActiveTab('my-docs');
+                        }} 
+                    />
+                )}
+                
+                {activeTab === 'editor' && (
+                    <DocumentEditor 
                         token={token} 
                         onDocumentCreated={() => {
                             setRefresh(r => r + 1);
