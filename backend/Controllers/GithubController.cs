@@ -30,7 +30,7 @@ public class GithubController : ControllerBase
         string state = Guid.NewGuid().ToString("N");
         string githubRedirect = $"https://github.com/login/oauth/authorize?client_id={_configuration["GitHub:clientId"]!}&" +
                                 $"state={state}&" +
-                                $"redirect_uri={"http://web-t3.rodrigoappelt.com/"}";
+                                $"redirect_uri={"http://web-t3.rodrigoappelt.com:8080/"}";
         openStates.Add(state);
         return Redirect(githubRedirect);
     }
@@ -47,7 +47,7 @@ public class GithubController : ControllerBase
                                 $"client_id={_configuration["GitHub:clientId"]!}&" +
                                 $"client_secret={_configuration["GitHub:clientSecret"]!}&" +
                                 $"code={code}&" +
-                                $"redirect_uri={"http://web-t3.rodrigoappelt.com/"}";
+                                $"redirect_uri={"http://web-t3.rodrigoappelt.com:8080/"}";
         // create httpcontent
         var content = new StringContent(string.Empty);
         content.Headers.Add("Accept", "application/json");
