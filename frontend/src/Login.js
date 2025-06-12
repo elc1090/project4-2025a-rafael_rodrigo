@@ -38,8 +38,7 @@ function Login({ onLogin }) {
     };
 
     const handleGitHubLogin = () => {
-        // Redirect to GitHub OAuth
-        window.location.href = 'http://web-t3.rodrigoappelt.com:8080/api/Github/login';
+        window.location.href = 'http://web-t3.rodrigoappelt.com:8080/api/github/login';
     };
 
     return (
