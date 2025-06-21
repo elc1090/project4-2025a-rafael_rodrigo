@@ -59,9 +59,14 @@ public class GithubController : ControllerBase
                                 $"client_secret={_configuration["GitHub:clientSecret"]!}&" +
                                 $"code={code}";
         // create httpcontent
-        var content = new StringContent(string.Empty);
-        content.Headers.Add("Accept", "application/json");
-        HttpResponseMessage response = await _httpClient.PostAsync(accessTokenUrl, content);
+        HttpRequestMessage request = new()
+        {
+            Method = HttpMethod.Post,
+            RequestUri = new Uri(accessTokenUrl),
+            Content = new StringContent(string.Empty)
+        };
+        request.Headers.Add("Accept", "application/json");
+        HttpResponseMessage response = await _httpClient.SendAsync(request);
         /*
          * response is like:
          * {
