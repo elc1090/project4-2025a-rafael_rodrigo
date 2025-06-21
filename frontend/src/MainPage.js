@@ -3,6 +3,7 @@ import './MainPage.css';
 import DocumentEditor from './DocumentEditor';
 import UserDocuments from './UserDocuments';
 import CommunityTab from './CommunityTab';
+import UploadTab from './UploadTab';
 
 function Header({ onLogout, userName }) {
     const initials = userName ? userName.split(' ').map(n => n[0]).join('').toUpperCase() : 'U';
