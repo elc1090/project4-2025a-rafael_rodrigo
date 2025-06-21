@@ -29,16 +29,9 @@ public class GithubController : ControllerBase
 
         string state = Guid.NewGuid().ToString("N");
         string githubRedirect = $"https://github.com/login/oauth/authorize?client_id={_configuration["GitHub:clientId"]!}&" +
-                                $"state={state}&" +
-                                $"redirect_uri=http://web-t3.rodrigoappelt.com:8080/api/github/login/callback/success";
+                                $"state={state}";
         openStates.Add(state);
         return Redirect(githubRedirect);
-    }
-
-    [HttpGet("login/callback/success")]
-    public IActionResult LoginSuccess()
-    {
-        return Redirect("http://web-t3.rodrigoappelt.com:8080");
     }
 
     [HttpGet("login/callback")]
@@ -52,8 +45,7 @@ public class GithubController : ControllerBase
         string accessTokenUrl = $"https://github.com/login/oauth/access_token?" +
                                 $"client_id={_configuration["GitHub:clientId"]!}&" +
                                 $"client_secret={_configuration["GitHub:clientSecret"]!}&" +
-                                $"code={code}&" +
-                                $"redirect_uri=http://web-t3.rodrigoappelt.com:8080/api/github/login/callback/success";
+                                $"code={code}";
         // create httpcontent
         var content = new StringContent(string.Empty);
         content.Headers.Add("Accept", "application/json");
@@ -66,6 +58,6 @@ public class GithubController : ControllerBase
          *     "token_type":"bearer"
          *  }
          */
-        return Ok();
+        return Redirect("http://web-t3.rodrigoappelt.com:8080/");
     }
 }
