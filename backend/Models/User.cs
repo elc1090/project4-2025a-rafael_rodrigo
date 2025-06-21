@@ -13,30 +13,30 @@ public class User {
     /// de dados</remarks>
     public Guid Id { get; set; }
 
+    public UserType UserType { get; set; }
+
+    #region Native Users
+
     /// <summary>
     /// Nome de usuario do usuario.
     /// </summary>
     public string Name { get; set; }
 
     /// <summary>
-    /// Email do usuario. Atualmente nao utilizado
-    /// </summary>
-    public string Email { get; set; }
-
-    /// <summary>
     /// A senha do usuario.
     /// </summary>
     public string Password { get; set; }
 
-    /// <summary>
-    /// Dia que o usuario criou a conta. Atualmente nao utilizado
-    /// </summary>
-    public DateTime CreatedAt { get; set; }
+    #endregion
 
-    /// <summary>
-    /// Dia que o usuario atualizou a conta. Atualmente nao utilizado
-    /// </summary>
-    public DateTime UpdatedAt { get; set; }
+    #region GitHub Users
+
+    public string GithubAccessToken { get; set; } = string.Empty;
+    public string GithubLogin { get; set; } = string.Empty;
+    public string GithubName { get; set; } = string.Empty;
+    public string GithubAvatarUrl { get; set; } = string.Empty;
+
+    #endregion
 
     /// <summary>
     /// Token de autenticacao gerado para o usuario.
@@ -45,7 +45,11 @@ public class User {
 
     public User()
     {
-        CreatedAt = DateTime.UtcNow;
-        UpdatedAt = DateTime.UtcNow;
     }
+}
+
+public enum UserType
+{
+    Native,
+    GitHub
 }
