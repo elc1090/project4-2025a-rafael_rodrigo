@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import './MainPage.css';
 import DocumentEditor from './DocumentEditor';
+import UserDocuments from './UserDocuments';
 
 function Header({ onLogout, userName }) {
     const initials = userName ? userName.split(' ').map(n => n[0]).join('').toUpperCase() : 'U';
@@ -107,7 +108,7 @@ function Dashboard({ token }) {
     );
 }
 
-function UserDocuments({ token, userId }) {
+/*function UserDocuments({ token, userId }) {
     const [docs, setDocs] = useState([]);
     const [loading, setLoading] = useState(true);
     const [renamingDoc, setRenamingDoc] = useState(null);
@@ -217,9 +218,10 @@ function UserDocuments({ token, userId }) {
                         </div>
                     </form>
                 </div>
-            )}
+            )}*/
 
             {/* Modal de confirmação de exclusão */}
+            /*
             {deletingDoc && (
                 <div className="confirmation-modal">
                     <div className="confirmation-box">
@@ -253,7 +255,7 @@ function UserDocuments({ token, userId }) {
         </section>
     );
 }
-
+*/
 function NewDocumentForm({ token, onDocumentCreated }) {
     const [name, setName] = useState('');
     const [language, setLanguage] = useState('Markdown');
@@ -383,7 +385,8 @@ function MainPage({ onLogout }) {
     const [userId, setUserId] = useState(null);
     const [userName, setUserName] = useState('');
     const token = localStorage.getItem('token');
-    const [activeTab, setActiveTab] = useState('upload');
+    const [currentView, setCurrentView] = useState('home');
+    const [refresh, setRefresh] = useState(0);
 
     useEffect(() => {
         // Busca dados do usuário autenticado
@@ -403,72 +406,162 @@ function MainPage({ onLogout }) {
     }, [token]);
 
     // Atualiza lista de documentos do usuário após upload
-    const [refresh, setRefresh] = useState(0);
+    const renderCurrentView = () => {
+        switch(currentView) {
+            case 'editor':
+                return (
+                    <div className="content-area editor-view">
+                        <DocumentEditor 
+                            token={token} 
+                            onDocumentCreated={() => {
+                                setRefresh(r => r + 1);
+                                setCurrentView('my-docs');
+                            }} 
+                        />
+                    </div>
+                );
+            
+            case 'upload':
+                return (
+                    <div className="content-area">
+                        <div className="page-header">
+                            <h2>Novo Upload</h2>
+                            <p>Envie seus arquivos LaTeX ou Markdown para compilação</p>
+                        </div>
+                        <div className="content-card">
+                            <NewDocumentForm 
+                                token={token} 
+                                onDocumentCreated={() => {
+                                    setRefresh(r => r + 1);
+                                    setCurrentView('my-docs');
+                                }} 
+                            />
+                        </div>
+                    </div>
+                );
+            
+            case 'my-docs':
+                return (
+                    <div className="content-area">
+                        <div className="page-header">
+                            <h2>Meus Documentos</h2>
+                            <p>Gerencie e visualize seus documentos compilados</p>
+                        </div>
+                        <div className="content-card">
+                            <UserDocuments token={token} userId={userId} key={`user-${refresh}`} />
+                        </div>
+                    </div>
+                );
+            
+            case 'community':
+                return (
+                    <div className="content-area">
+                        <div className="page-header">
+                            <h2>Comunidade</h2>
+                            <p>Explore documentos públicos da comunidade</p>
+                        </div>
+                        <div className="content-card">
+                            <Dashboard token={token} key={`dash-${refresh}`} />
+                        </div>
+                    </div>
+                );
+            
+            default:
+                return (
+                    <div className="content-area">
+                        <div className="page-header">
+                            <h2>Bem-vindo ao TexTogether, {userName || 'Usuário'}!</h2>
+                            <p>Plataforma completa para criação e compilação de documentos LaTeX e Markdown</p>
+                        </div>
+                        
+                        <div className="content-grid">
+                            <div className="feature-card">
+                                <h3>📝 Editor Online</h3>
+                                <p>Editor completo com syntax highlighting, auto-complete e templates para LaTeX e Markdown</p>
+                            </div>
+                            <div className="feature-card">
+                                <h3>📤 Upload Rápido</h3>
+                                <p>Faça upload dos seus arquivos existentes e compile instantaneamente</p>
+                            </div>
+                            <div className="feature-card">
+                                <h3>📚 Biblioteca</h3>
+                                <p>Organize e gerencie todos os seus documentos em um só lugar</p>
+                            </div>
+                            <div className="feature-card">
+                                <h3>🌐 Comunidade</h3>
+                                <p>Compartilhe e descubra documentos públicos da comunidade</p>
+                            </div>
+                        </div>
+                        
+                        <div className="quick-actions">
+                            <button 
+                                className="action-btn" 
+                                onClick={() => setCurrentView('editor')}
+                            >
+                                ✨ Criar Documento
+                            </button>
+                            <button 
+                                className="action-btn secondary" 
+                                onClick={() => setCurrentView('upload')}
+                            >
+                                📁 Fazer Upload
+                            </button>
+                        </div>
+                    </div>
+                );
+        }
+    };
 
     return (
         <div className="main-container">
-            <Header onLogout={onLogout} userName={userName} />
-            
-            <section className="welcome-section">
-                <h2>Bem-vindo ao TexTogether, {userName || 'Usuário'}!</h2>
-                <p>Envie seus arquivos LaTeX ou Markdown e receba o PDF compilado em instantes.</p>
-            </section>
-            
-            <div className="features-section">
-                <div className="tabs">
-                    <div 
-                        className={`tab ${activeTab === 'upload' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('upload')}
-                    >
-                        Novo upload
-                    </div>
-                    <div 
-                        className={`tab ${activeTab === 'editor' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('editor')}
-                    >
-                        Editor
-                    </div>
-                    <div 
-                        className={`tab ${activeTab === 'my-docs' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('my-docs')}
-                    >
-                        Meus documentos
-                    </div>
-                    <div 
-                        className={`tab ${activeTab === 'community' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('community')}
-                    >
-                        Comunidade
-                    </div>
+            <div className="navigation-header">
+                <div className="nav-brand">
+                    <h1>TexTogether</h1>
+                    <p className="nav-welcome">Olá, {userName || 'Usuário'}!</p>
                 </div>
                 
-                {activeTab === 'upload' && (
-                    <NewDocumentForm 
-                        token={token} 
-                        onDocumentCreated={() => {
-                            setRefresh(r => r + 1);
-                            setActiveTab('my-docs');
-                        }} 
-                    />
-                )}
-                
-                {activeTab === 'editor' && (
-                    <DocumentEditor 
-                        token={token} 
-                        onDocumentCreated={() => {
-                            setRefresh(r => r + 1);
-                            setActiveTab('my-docs');
-                        }} 
-                    />
-                )}
-                
-                {activeTab === 'my-docs' && (
-                    <UserDocuments token={token} userId={userId} key={`user-${refresh}`} />
-                )}
-                
-                {activeTab === 'community' && (
-                    <Dashboard token={token} key={`dash-${refresh}`} />
-                )}
+                <div className="nav-buttons">
+                    <button 
+                        className={`nav-btn ${currentView === 'home' ? 'active' : ''}`}
+                        onClick={() => setCurrentView('home')}
+                    >
+                        🏠 Início
+                    </button>
+                    <button 
+                        className={`nav-btn ${currentView === 'editor' ? 'active' : ''}`}
+                        onClick={() => setCurrentView('editor')}
+                    >
+                        ✏️ Editor
+                    </button>
+                    <button 
+                        className={`nav-btn ${currentView === 'upload' ? 'active' : ''}`}
+                        onClick={() => setCurrentView('upload')}
+                    >
+                        📤 Upload
+                    </button>
+                    <button 
+                        className={`nav-btn ${currentView === 'my-docs' ? 'active' : ''}`}
+                        onClick={() => setCurrentView('my-docs')}
+                    >
+                        📚 Meus Docs
+                    </button>
+                    <button 
+                        className={`nav-btn ${currentView === 'community' ? 'active' : ''}`}
+                        onClick={() => setCurrentView('community')}
+                    >
+                        🌐 Comunidade
+                    </button>
+                    <button 
+                        className="nav-btn logout"
+                        onClick={onLogout}
+                    >
+                        🚪 Sair
+                    </button>
+                </div>
+            </div>
+            
+            <div className="main-content">
+                {renderCurrentView()}
             </div>
         </div>
     );
