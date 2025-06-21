@@ -1,30 +1,44 @@
 import React, { useState } from 'react';
+import './App.css';
 import Login from './Login';
-import Register from './Register';
 import MainPage from './MainPage';
+import useGitHubToken from './useGitHubToken';
 
 function App() {
-    const [loggedIn, setLoggedIn] = useState(!!localStorage.getItem('token'));
-    const [showRegister, setShowRegister] = useState(false);
+  const { token, setToken, isLoading } = useGitHubToken();
+  const [showRegister, setShowRegister] = useState(false);
 
-    if (loggedIn) {
-        return <MainPage onLogout={() => {
-            localStorage.removeItem('token');
-            setLoggedIn(false);
-        }} />;
-    }
+  const handleLogin = (newToken) => {
+    localStorage.setItem('token', newToken);
+    setToken(newToken);
+  };
 
-    if (showRegister) {
-        return <Register 
-            onRegister={() => setLoggedIn(true)}
-            onBackToLogin={() => setShowRegister(false)}
-        />;
-    }
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    setToken(null);
+  };
 
-    return <Login 
-        onLogin={() => setLoggedIn(true)}
-        onShowRegister={() => setShowRegister(true)}
-    />;
+  // Mostrar loading enquanto verifica token da URL
+  if (isLoading) {
+    return (
+      <div className="App">
+        <div className="loading-container">
+          <div className="loading-spinner"></div>
+          <p className="loading-text">Verificando autenticação...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="App">
+      {token ? (
+        <MainPage token={token} onLogout={handleLogout} />
+      ) : (
+        <Login onLogin={handleLogin} />
+      )}
+    </div>
+  );
 }
 
 export default App;
