@@ -21,6 +21,27 @@ function CommunityTab({ token }) {
             
             if (response.ok) {
                 const docs = await response.json();
+                const userIds = [...new Set(docs.map(doc => doc.userId))];
+                const namesObject = {};
+                await Promise.all(userIds.map(async (userId) => {
+                    try {
+                        const userResponse = await fetch(`http://web-t3.rodrigoappelt.com:8080/api/User/${userId}`, {
+                            headers: { 'Authorization': 'Bearer ' + token }
+                        });
+                        if (userResponse.ok) {
+                            const userData = await userResponse.json();
+                            namesObject[userId] = userData.name;
+                        } else {
+                            namesObject[userId] = 'Usuário Desconhecido';
+                        }
+                    } catch (error) {
+                        console.error(`Erro ao buscar usuário ${userId}:`, error);
+                        namesObject[userId] = 'Usuário Desconhecido';
+                    }
+                }));
+                docs.forEach(doc => {
+                    doc.userName = namesObject[doc.userId];
+                });
                 console.log('Documentos da comunidade carregados:', docs);
                 setDocuments(docs);
             } else {
@@ -134,7 +155,7 @@ function CommunityTab({ token }) {
                                     <div className="document-meta">
                                         <div className="meta-item">
                                             <span className="meta-icon">👤</span>
-                                            <span>{doc.user}</span>
+                                            <span>{doc.userName}</span>
                                         </div>
                                         <div className="meta-item">
                                             <span className="meta-icon">📅</span>
