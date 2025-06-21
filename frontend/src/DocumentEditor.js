@@ -2,12 +2,12 @@ import React, { useState, useRef } from 'react';
 import Editor from '@monaco-editor/react';
 import './DocumentEditor.css';
 
-function DocumentEditor({ token, onDocumentCreated }) {
-    const [name, setName] = useState('');
+function DocumentEditor({ token, onDocumentCreated }) {    const [name, setName] = useState('');
     const [language, setLanguage] = useState('latex');
     const [content, setContent] = useState('');
     const [status, setStatus] = useState({ type: '', message: '' });
     const [isCompiling, setIsCompiling] = useState(false);
+    const [activeToolbar, setActiveToolbar] = useState('latex');
     const editorRef = useRef(null);
 
     const defaultLatexContent = `\\documentclass{article}
@@ -258,30 +258,41 @@ Conclusões finais...
                 return { suggestions: suggestions };
             }
         });
-        
-        // Configurar tema escuro personalizado
+          // Configurar tema claro personalizado integrado ao site
         monaco.editor.defineTheme('textogether-theme', {
-            base: 'vs-dark',
+            base: 'vs',
             inherit: true,
             rules: [
-                { token: 'comment', foreground: '6A9955', fontStyle: 'italic' },
-                { token: 'keyword', foreground: '569CD6', fontStyle: 'bold' },
-                { token: 'keyword.control', foreground: 'C586C0', fontStyle: 'bold' },
-                { token: 'keyword.operator', foreground: 'D4D4D4' },
-                { token: 'string', foreground: 'CE9178' },
-                { token: 'string.quote', foreground: 'CE9178' },
-                { token: 'string.escape.invalid', foreground: 'F44747' },
-                { token: 'number', foreground: 'B5CEA8' },
-                { token: 'number.float', foreground: 'B5CEA8' },
-                { token: 'delimiter.bracket', foreground: 'FFD700' },
-                { token: 'delimiter.square', foreground: 'DA70D6' }
+                { token: 'comment', foreground: '6A994E', fontStyle: 'italic' },
+                { token: 'keyword', foreground: '4ca1af', fontStyle: 'bold' },
+                { token: 'keyword.control', foreground: '6c5ce7', fontStyle: 'bold' },
+                { token: 'keyword.operator', foreground: '2c3e50' },
+                { token: 'string', foreground: 'e17055' },
+                { token: 'string.quote', foreground: 'e17055' },
+                { token: 'string.escape.invalid', foreground: 'e74c3c' },
+                { token: 'number', foreground: '00b894' },
+                { token: 'number.float', foreground: '00b894' },
+                { token: 'delimiter.bracket', foreground: 'f39c12' },
+                { token: 'delimiter.square', foreground: '9b59b6' }
             ],
             colors: {
-                'editor.background': '#1e1e1e',
-                'editor.foreground': '#d4d4d4',
-                'editorLineNumber.foreground': '#858585',
-                'editor.selectionBackground': '#264f78',
-                'editor.inactiveSelectionBackground': '#3a3d41'
+                'editor.background': '#fafbfc',
+                'editor.foreground': '#2c3e50',
+                'editorLineNumber.foreground': '#95a5a6',
+                'editorLineNumber.activeForeground': '#4ca1af',
+                'editor.selectionBackground': '#d4e9f0',
+                'editor.inactiveSelectionBackground': '#ecf3f7',
+                'editor.lineHighlightBackground': '#f8f9fa',
+                'editorCursor.foreground': '#4ca1af',
+                'editor.findMatchBackground': '#ffeaa7',
+                'editor.findMatchHighlightBackground': '#fff5d6',
+                'editorWidget.background': '#ffffff',
+                'editorWidget.border': '#e9ecef',
+                'editorSuggestWidget.background': '#ffffff',
+                'editorSuggestWidget.border': '#e9ecef',
+                'editorSuggestWidget.selectedBackground': '#f1f3f4',
+                'editorHoverWidget.background': '#ffffff',
+                'editorHoverWidget.border': '#e9ecef'
             }
         });
         
@@ -301,6 +312,26 @@ Conclusões finais...
         setName('');
         setContent(language === 'latex' ? defaultLatexContent : defaultMarkdownContent);
         setStatus({ type: '', message: '' });
+    };
+
+    const insertText = (text) => {
+        if (editorRef.current) {
+            const editor = editorRef.current;
+            const selection = editor.getSelection();
+            const range = new window.monaco.Range(
+                selection.startLineNumber,
+                selection.startColumn,
+                selection.endLineNumber,
+                selection.endColumn
+            );
+            editor.executeEdits('', [{
+                range: range,
+                text: text
+            }]);
+            editor.focus();
+        } else {
+            setContent(content + text);
+        }
     };
 
     const handleCompileAndSave = async () => {
@@ -408,57 +439,147 @@ Conclusões finais...
                         {status.message}
                     </div>
                 )}
-            </div>
-
-            <div className="editor-container">
-                <div className="editor-sidebar">
-                    <h4>Recursos</h4>
-                    <div className="resource-section">
-                        <h5>LaTeX</h5>
-                        <div className="resource-items">
-                            <button onClick={() => setContent(content + '\\section{Nova Seção}\n')}>
-                                Seção
+            </div>            <div className="editor-container">
+                <div className="editor-toolbar">
+                    <div className="toolbar-main">
+                        {/* Ações principais */}
+                        <div className="toolbar-group">
+                            <button className="toolbar-icon-btn" onClick={() => insertText('\\textbf{texto}')}>
+                                <strong>B</strong>
                             </button>
-                            <button onClick={() => setContent(content + '\\subsection{Subseção}\n')}>
-                                Subseção
+                            <button className="toolbar-icon-btn" onClick={() => insertText('\\textit{texto}')}>
+                                <em>I</em>
                             </button>
-                            <button onClick={() => setContent(content + '\\textbf{texto em negrito}')}>
-                                Negrito
+                            <button className="toolbar-icon-btn" onClick={() => insertText('\\underline{texto}')}>
+                                <u>U</u>
                             </button>
-                            <button onClick={() => setContent(content + '\\textit{texto em itálico}')}>
-                                Itálico
+                        </div>
+                        
+                        <div className="toolbar-separator-vertical"></div>
+                        
+                        {/* Estrutura do documento */}
+                        <div className="toolbar-group">
+                            <button className="toolbar-icon-btn" onClick={() => insertText('\\section{Nova Seção}\n')} title="Seção">
+                                H1
                             </button>
-                            <button onClick={() => setContent(content + '\\begin{itemize}\n\\item Item 1\n\\item Item 2\n\\end{itemize}\n')}>
-                                Lista
+                            <button className="toolbar-icon-btn" onClick={() => insertText('\\subsection{Subseção}\n')} title="Subseção">
+                                H2
                             </button>
-                            <button onClick={() => setContent(content + '\\begin{equation}\ny = mx + b\n\\end{equation}\n')}>
-                                Equação
+                        </div>
+                        
+                        <div className="toolbar-separator-vertical"></div>
+                        
+                        {/* Listas */}
+                        <div className="toolbar-group">
+                            <button className="toolbar-icon-btn" onClick={() => insertText('\\begin{itemize}\n\\item Item\n\\end{itemize}\n')} title="Lista">
+                                ⋅⋅⋅
+                            </button>
+                            <button className="toolbar-icon-btn" onClick={() => insertText('\\begin{enumerate}\n\\item Item\n\\end{enumerate}\n')} title="Lista Numerada">
+                                123
+                            </button>
+                        </div>
+                        
+                        <div className="toolbar-separator-vertical"></div>
+                        
+                        {/* Matemática */}
+                        <div className="toolbar-group">
+                            <button className="toolbar-icon-btn" onClick={() => insertText('\\frac{a}{b}')} title="Fração">
+                                ᵃ∕ᵦ
+                            </button>
+                            <button className="toolbar-icon-btn" onClick={() => insertText('\\sqrt{x}')} title="Raiz">
+                                √
+                            </button>
+                            <button className="toolbar-icon-btn" onClick={() => insertText('x^{2}')} title="Exponente">
+                                x²
+                            </button>
+                            <button className="toolbar-icon-btn" onClick={() => insertText('x_{i}')} title="Subscrito">
+                                xᵢ
+                            </button>
+                        </div>
+                        
+                        <div className="toolbar-separator-vertical"></div>
+                        
+                        {/* Símbolos matemáticos */}
+                        <div className="toolbar-group">
+                            <button className="toolbar-icon-btn" onClick={() => insertText('\\sum_{i=1}^{n}')} title="Somatório">
+                                Σ
+                            </button>
+                            <button className="toolbar-icon-btn" onClick={() => insertText('\\int_{a}^{b}')} title="Integral">
+                                ∫
+                            </button>
+                            <button className="toolbar-icon-btn" onClick={() => insertText('\\prod_{i=1}^{n}')} title="Produtório">
+                                ∏
+                            </button>
+                        </div>
+                        
+                        <div className="toolbar-separator-vertical"></div>
+                        
+                        {/* Ambientes */}
+                        <div className="toolbar-group">
+                            <button className="toolbar-icon-btn" onClick={() => insertText('\\begin{equation}\n\n\\end{equation}\n')} title="Equação">
+                                ƒ(x)
+                            </button>
+                            <button className="toolbar-icon-btn" onClick={() => insertText('\\begin{figure}[h]\n\\centering\n\\includegraphics[width=0.8\\textwidth]{imagem}\n\\caption{Legenda}\n\\end{figure}\n')} title="Figura">
+                                🖼
+                            </button>
+                            <button className="toolbar-icon-btn" onClick={() => insertText('\\begin{table}[h]\n\\centering\n\\begin{tabular}{|c|c|}\n\\hline\nA & B \\\\\n\\hline\n\\end{tabular}\n\\caption{Legenda}\n\\end{table}\n')} title="Tabela">
+                                ⚏
+                            </button>
+                        </div>
+                        
+                        <div className="toolbar-separator-vertical"></div>
+                        
+                        {/* Símbolos especiais */}
+                        <div className="toolbar-group">
+                            <button className="toolbar-icon-btn" onClick={() => insertText('\\alpha')} title="Alpha">
+                                α
+                            </button>
+                            <button className="toolbar-icon-btn" onClick={() => insertText('\\beta')} title="Beta">
+                                β
+                            </button>
+                            <button className="toolbar-icon-btn" onClick={() => insertText('\\gamma')} title="Gamma">
+                                γ
+                            </button>
+                            <button className="toolbar-icon-btn" onClick={() => insertText('\\delta')} title="Delta">
+                                δ
+                            </button>
+                            <button className="toolbar-icon-btn" onClick={() => insertText('\\pi')} title="Pi">
+                                π
                             </button>
                         </div>
                     </div>
                     
-                    <div className="resource-section">
-                        <h5>Markdown</h5>
-                        <div className="resource-items">
-                            <button onClick={() => setContent(content + '\n## Nova Seção\n')}>
-                                Seção
-                            </button>
-                            <button onClick={() => setContent(content + '\n### Subseção\n')}>
-                                Subseção
-                            </button>
-                            <button onClick={() => setContent(content + '**texto em negrito**')}>
-                                Negrito
-                            </button>
-                            <button onClick={() => setContent(content + '*texto em itálico*')}>
-                                Itálico
-                            </button>
-                            <button onClick={() => setContent(content + '\n- Item 1\n- Item 2\n- Item 3\n')}>
-                                Lista
-                            </button>
-                            <button onClick={() => setContent(content + '\n```\ncódigo aqui\n```\n')}>
-                                Código
-                            </button>
-                        </div>
+                    {/* Dropdown para mais opções */}
+                    <div className="toolbar-dropdown">
+                        <select className="toolbar-select" onChange={(e) => {
+                            if (e.target.value) {
+                                insertText(e.target.value);
+                                e.target.value = '';
+                            }
+                        }}>
+                            <option value="">Mais símbolos...</option>
+                            <optgroup label="Letras Gregas">
+                                <option value="\\lambda">λ (lambda)</option>
+                                <option value="\\mu">μ (mu)</option>
+                                <option value="\\sigma">σ (sigma)</option>
+                                <option value="\\omega">ω (omega)</option>
+                                <option value="\\theta">θ (theta)</option>
+                                <option value="\\phi">φ (phi)</option>
+                            </optgroup>
+                            <optgroup label="Operadores">
+                                <option value="\\leq">≤ (menor ou igual)</option>
+                                <option value="\\geq">≥ (maior ou igual)</option>
+                                <option value="\\neq">≠ (diferente)</option>
+                                <option value="\\approx">≈ (aproximadamente)</option>
+                                <option value="\\infty">∞ (infinito)</option>
+                            </optgroup>
+                            <optgroup label="Conjuntos">
+                                <option value="\\mathbb{R}">ℝ (reais)</option>
+                                <option value="\\mathbb{N}">ℕ (naturais)</option>
+                                <option value="\\mathbb{Z}">ℤ (inteiros)</option>
+                                <option value="\\mathbb{Q}">ℚ (racionais)</option>
+                            </optgroup>
+                        </select>
                     </div>
                 </div>
 
@@ -468,12 +589,12 @@ Conclusões finais...
                         language={language === 'latex' ? 'latex' : 'markdown'}
                         value={content}
                         onChange={(value) => setContent(value || '')}
-                        onMount={handleEditorDidMount}
-                        options={{
+                        onMount={handleEditorDidMount}                        options={{
                             minimap: { enabled: true },
-                            fontSize: 14,
+                            fontSize: 16,
+                            lineHeight: 24,
+                            letterSpacing: 0.5,
                             lineNumbers: 'on',
-                            rulers: [80],
                             wordWrap: 'on',
                             automaticLayout: true,
                             scrollBeyondLastLine: false,
@@ -488,7 +609,8 @@ Conclusões finais...
                             lineNumbersMinChars: 3,
                             suggestOnTriggerCharacters: true,
                             quickSuggestions: true,
-                            parameterHints: { enabled: true }
+                            parameterHints: { enabled: true },
+                            padding: { top: 15, bottom: 15 }
                         }}
                     />
                 </div>

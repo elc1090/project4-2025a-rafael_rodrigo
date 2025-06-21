@@ -69,7 +69,7 @@
 }
 
 .compile-btn {
-    background: #28a745;
+    background: #4ca1af;
     color: white;
     border: none;
     padding: 8px 16px;
@@ -81,7 +81,7 @@
 }
 
 .compile-btn:hover:not(:disabled) {
-    background: #218838;
+    background: #4ca1af;
 }
 
 .compile-btn:disabled {
@@ -118,6 +118,8 @@
     display: flex;
     flex: 1;
     overflow: hidden;
+    flex-direction: column !important;
+    min-height: 0;
 }
 
 .editor-sidebar {
@@ -171,11 +173,133 @@
 .editor-main {
     flex: 1;
     position: relative;
+    min-height: 0;
+    background: #fafbfc;
+    border: 1px solid #e9ecef;
+    border-radius: 0 0 8px 8px;
 }
 
-/* Customização do Monaco Editor */
+/* Customização do Monaco Editor para tema claro */
 .monaco-editor {
-    border-radius: 0 0 8px 0;
+    border-radius: 0 0 8px 8px;
+}
+
+.monaco-editor .margin {
+    background-color: #f8f9fa !important;
+}
+
+.monaco-editor .monaco-editor-background {
+    background-color: #fafbfc !important;
+}
+
+/* Melhorar a aparência dos widgets do editor */
+.monaco-editor .suggest-widget {
+    background: #ffffff !important;
+    border: 1px solid #e9ecef !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1) !important;
+}
+
+.monaco-editor .parameter-hints-widget {
+    background: #ffffff !important;
+    border: 1px solid #e9ecef !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1) !important;
+}
+
+/* Scrollbar personalizada */
+.monaco-editor .monaco-scrollable-element > .scrollbar > .slider {
+    background: rgba(76, 161, 175, 0.3) !important;
+}
+
+.monaco-editor .monaco-scrollable-element > .scrollbar > .slider:hover {
+    background: rgba(76, 161, 175, 0.5) !important;
+}
+
+.monaco-editor .monaco-scrollable-element > .scrollbar > .slider.active {
+    background: rgba(76, 161, 175, 0.7) !important;
+}
+
+/* Toolbar estilo Overleaf */
+.editor-toolbar {
+    background: #f8f9fa;
+    border-bottom: 1px solid #e9ecef;
+    padding: 8px 20px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.toolbar-main {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+}
+
+.toolbar-group {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.toolbar-icon-btn {
+    background: #ffffff;
+    border: 1px solid #dee2e6;
+    padding: 6px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 32px;
+    height: 32px;
+    color: #495057;
+}
+
+.toolbar-icon-btn:hover {
+    background: #e9ecef;
+    border-color: #4ca1af;
+    color: #4ca1af;
+}
+
+.toolbar-icon-btn:active {
+    background: #d4e9f0;
+    border-color: #4ca1af;
+}
+
+.toolbar-separator-vertical {
+    width: 1px;
+    height: 24px;
+    background: #dee2e6;
+    margin: 0 4px;
+}
+
+.toolbar-dropdown {
+    margin-left: auto;
+}
+
+.toolbar-select {
+    background: #ffffff;
+    border: 1px solid #dee2e6;
+    padding: 6px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    color: #6c757d;
+    cursor: pointer;
+    min-width: 120px;
+}
+
+.toolbar-select:hover {
+    border-color: #4ca1af;
+}
+
+.toolbar-select:focus {
+    outline: none;
+    border-color: #4ca1af;
+    box-shadow: 0 0 0 2px rgba(76, 161, 175, 0.1);
 }
 
 /* Responsividade */
@@ -214,5 +338,35 @@
     .resource-items button {
         flex: 1;
         min-width: 100px;
+    }
+
+    .toolbar-main {
+        flex-wrap: wrap;
+        gap: 4px;
+    }
+    
+    .toolbar-group {
+        gap: 2px;
+    }
+    
+    .toolbar-icon-btn {
+        min-width: 28px;
+        height: 28px;
+        font-size: 12px;
+    }
+    
+    .toolbar-separator-vertical {
+        height: 20px;
+        margin: 0 2px;
+    }
+    
+    .toolbar-dropdown {
+        margin-left: 0;
+        margin-top: 8px;
+        width: 100%;
+    }
+    
+    .toolbar-select {
+        width: 100%;
     }
 }
