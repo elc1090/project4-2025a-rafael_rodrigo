@@ -127,7 +127,7 @@ public sealed class UserService : IDisposable {
         var col = Database.GetCollection<User>();
         col.EnsureIndex(x => x.Id);
         User? user = col.Query()
-            .Where(x => x.Name == username)
+            .Where(x => x.Name == username && x.UserType == UserType.Native)
             .FirstOrDefault();
 
         if (user is null) {
