@@ -204,6 +204,71 @@
     box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
 }
 
+/* Estilos para botão de compartilhamento */
+.action-button.success {
+    background: #28a745 !important;
+    color: white !important;
+    transform: scale(1.05);
+    transition: all 0.3s ease;
+    border: 2px solid #28a745 !important;
+}
+
+.copy-btn.success {
+    animation: shareSuccess 0.6s ease-in-out;
+}
+
+@keyframes shareSuccess {
+    0% { 
+        transform: scale(1); 
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    50% { 
+        transform: scale(1.1); 
+        box-shadow: 0 4px 12px rgba(40, 167, 69, 0.4);
+    }
+    100% { 
+        transform: scale(1.05); 
+        box-shadow: 0 3px 8px rgba(40, 167, 69, 0.3);
+    }
+}
+
+/* Efeito de hover melhorado para botão de compartilhamento */
+.copy-btn:hover {
+    background: #fd79a8;
+    color: white;
+    border-color: #fd79a8;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(253, 121, 168, 0.3);
+}
+
+/* Tooltip para links de compartilhamento */
+.copy-btn[title]:hover::after {
+    content: attr(title);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #333;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    white-space: nowrap;
+    z-index: 1000;
+    margin-bottom: 5px;
+}
+
+.copy-btn[title]:hover::before {
+    content: '';
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 4px solid transparent;
+    border-top-color: #333;
+    z-index: 1000;
+}
+
 .empty-state {
     text-align: center;
     padding: 60px 20px;
@@ -272,6 +337,83 @@
 @keyframes spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
+}
+
+/* Custom toast styles for share link */
+@keyframes slideInRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideOutRight {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+}
+
+.custom-toast {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+}
+
+.custom-toast .toast-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.custom-toast .toast-icon {
+    font-size: 1.2rem;
+    flex-shrink: 0;
+}
+
+.custom-toast .toast-message {
+    flex: 1;
+    font-size: 0.9rem;
+    line-height: 1.4;
+}
+
+.custom-toast .toast-message strong {
+    display: block;
+    margin-bottom: 2px;
+}
+
+.custom-toast .toast-message small {
+    opacity: 0.9;
+    font-size: 0.8rem;
+    word-break: break-all;
+}
+
+.custom-toast .toast-close {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1rem;
+    cursor: pointer;
+    opacity: 0.8;
+    transition: opacity 0.2s ease;
+    padding: 4px;
+    border-radius: 4px;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.custom-toast .toast-close:hover {
+    opacity: 1;
+    background: rgba(255, 255, 255, 0.1);
 }
 
 /* Responsividade */

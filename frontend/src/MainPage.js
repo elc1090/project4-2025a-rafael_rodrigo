@@ -4,6 +4,8 @@ import DocumentEditor from './DocumentEditor';
 import UserDocuments from './UserDocuments';
 import CommunityTab from './CommunityTab';
 import UploadTab from './UploadTab';
+import ToastContainer from './ToastContainer';
+import { useToast } from './useToast';
 
 function Header({ onLogout, userName }) {
     const initials = userName ? userName.split(' ').map(n => n[0]).join('').toUpperCase() : 'U';
@@ -153,6 +155,7 @@ function MainPage({ onLogout }) {
     const token = localStorage.getItem('token');
     const [currentView, setCurrentView] = useState('home');
     const [refresh, setRefresh] = useState(0);
+    const { addToast } = useToast();
 
     useEffect(() => {
         // Busca dados do usuário autenticado
@@ -319,6 +322,8 @@ function MainPage({ onLogout }) {
             <div className="main-content">
                 {renderCurrentView()}
             </div>
+
+            <ToastContainer />
         </div>
     );
 }

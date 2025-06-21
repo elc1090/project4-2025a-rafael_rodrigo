@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './UserDocuments.css';
+import { copyShareLink } from './shareUtils';
 
 function UserDocuments({ token, userId }) {
     const [documents, setDocuments] = useState([]);
@@ -174,17 +175,56 @@ function UserDocuments({ token, userId }) {
                                 >
                                     <span>📥</span>
                                     Download PDF
-                                </a>
-                                <button
-                                    className="action-button secondary"
-                                    onClick={() => {
-                                        navigator.clipboard.writeText(`http://web-t3.rodrigoappelt.com:8080/api/document/download/${doc.id}`);
-                                        alert('Link copiado!');
-                                    }}
-                                >
-                                    <span>🔗</span>
-                                    Copiar Link
-                                </button>
+                                </a>                                        <button
+                                            className="action-button secondary copy-btn"
+                                            data-doc-id={doc.id}
+                                            onClick={async () => {
+                                                const result = await copyShareLink(doc.id, token);
+                                                if (result.success) {
+                                                    // Criar toast de sucesso
+                                                    const toastElement = document.createElement('div');
+                                                    toastElement.className = 'custom-toast toast-success';
+                                                    toastElement.innerHTML = `
+                                                        <div class="toast-content">
+                                                            <div class="toast-icon">✅</div>
+                                                            <div class="toast-message">
+                                                                <strong>Link copiado com sucesso!</strong><br>
+                                                                <small>${result.url}</small>
+                                                            </div>
+                                                            <button class="toast-close" onclick="this.parentElement.parentElement.remove()">✕</button>
+                                                        </div>
+                                                    `;
+                                                    toastElement.style.cssText = `
+                                                        position: fixed;
+                                                        top: 20px;
+                                                        right: 20px;
+                                                        z-index: 9999;
+                                                        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+                                                        color: white;
+                                                        padding: 12px 16px;
+                                                        border-radius: 8px;
+                                                        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+                                                        max-width: 400px;
+                                                        animation: slideInRight 0.3s ease;
+                                                    `;
+                                                    
+                                                    document.body.appendChild(toastElement);
+                                                    
+                                                    // Remover após 4 segundos
+                                                    setTimeout(() => {
+                                                        if (toastElement.parentElement) {
+                                                            toastElement.style.animation = 'slideOutRight 0.3s ease';
+                                                            setTimeout(() => {
+                                                                toastElement.remove();
+                                                            }, 300);
+                                                        }
+                                                    }, 4000);
+                                                }
+                                            }}
+                                        >
+                                            <span>🔗</span>
+                                            Copiar Link
+                                        </button>
                                 <button
                                     className="action-button danger"
                                     onClick={() => handleDelete(doc.id)}
