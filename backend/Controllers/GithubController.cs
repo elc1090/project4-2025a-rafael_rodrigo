@@ -31,12 +31,15 @@ public class GithubController : ControllerBase
         string githubRedirect = $"https://github.com/login/oauth/authorize?client_id={_configuration["GitHub:clientId"]!}&" +
                                 $"state={state}";
         openStates.Add(state);
+        Console.WriteLine("GithubLogin called and opened state: " + state);
         return Redirect(githubRedirect);
     }
 
     [HttpGet("login/callback")]
     public async Task<IActionResult> LoginCallback(string code, string state)
     {
+        Console.WriteLine("LoginCallback called with code: " + code + " and state: " + state);
+        Console.WriteLine("OpenStates: " + string.Join(", ", openStates.Select(x => x.Take(4))));
         if (!openStates.Remove(state))
         {
             return BadRequest("Invalid state parameter.");
