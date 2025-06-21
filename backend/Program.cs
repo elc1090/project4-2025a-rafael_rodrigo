@@ -41,6 +41,8 @@ static void ConfigureServices(IServiceCollection services)
 {
     services.AddSingleton<UserService>();
     services.AddSingleton<DocumentService>();
-    services.AddSingleton<HttpClient>();
+    HttpClient http = new();
+    http.DefaultRequestHeaders.UserAgent.Add(new System.Net.Http.Headers.ProductInfoHeaderValue("TexTogether", "1.0"));
+    services.AddSingleton<HttpClient>(http);
     services.AddSingleton<GithubService>();
 }

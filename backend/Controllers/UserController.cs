@@ -115,8 +115,6 @@ public class UserController : ControllerBase {
         return Ok(new {
             user.Id,
             user.Name,
-            user.CreatedAt,
-            user.UpdatedAt
         });
     }
 
