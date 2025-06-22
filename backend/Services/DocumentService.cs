@@ -11,11 +11,16 @@ public class DocumentService
 {
     private readonly UserService userService;
     private readonly HttpClient httpClient;
-    
-    public DocumentService(UserService userService, HttpClient httpClient)
+    private readonly RendererService renderer;
+    private readonly ILogger<DocumentService> logger;
+
+
+    public DocumentService(UserService userService, HttpClient httpClient, RendererService renderer, ILogger<DocumentService> logger)
     {
         this.userService = userService;
         this.httpClient = httpClient;
+        this.renderer = renderer;
+        this.logger = logger;
     }
 
     private LiteDatabase database => userService.Database;
@@ -25,19 +30,19 @@ public class DocumentService
     /// </summary>
     /// <param name="ordered">Se os documentos devem ser ordenados em ordem descrescente de data</param>
     /// <returns>Um enumerador com todos os documentos existentes</returns>
-    public IEnumerable<CompiledDocument> GetDocuments(bool ordered)
+    public IEnumerable<Document> GetDocuments(bool ordered)
     {
-        var col = database.GetCollection<CompiledDocument>();
-        col.EnsureIndex(x => x.Created);
+        var col = database.GetCollection<Document>();
+        col.EnsureIndex(x => x.Id);
         if (ordered)
         {
             return col.Query()
-                .OrderByDescending(x => x.Created)
+                .Where(x => x.IsPublic)
+                .OrderByDescending(x => x.LastModificationTime)
                 .ToEnumerable();
         }
         return col.Query()
             .ToEnumerable();
-        
     }
     
     /// <summary>
@@ -45,19 +50,19 @@ public class DocumentService
     /// </summary>
     /// <param name="userId">O id do usuario a ser procurado</param>
     /// <returns>Um enumerador com os documentos desse usuario</returns>
-    public List<CompiledDocument> GetUserDocuments(Guid userId)
+    public List<Document> GetUserDocuments(Guid userId)
     {
-        var col = database.GetCollection<CompiledDocument>();
-        col.EnsureIndex(x => x.UserId);
+        var col = database.GetCollection<Document>();
+        col.EnsureIndex(x => x.Owner);
         return col.Query()
-            .Where(x => x.UserId == userId)
+            .Where(x => x.Owner == userId)
             .ToList();
     }
 
-    public CompiledDocument? GetDocument(Guid documentId) {
-        var col = database.GetCollection<CompiledDocument>();
+    public Document? GetDocument(Guid documentId) {
+        var col = database.GetCollection<Document>();
         col.EnsureIndex(x => x.Id);
-        CompiledDocument? doc = col.Query()
+        Document? doc = col.Query()
             .Where(x => x.Id == documentId)
             .FirstOrDefault();
         return doc;
@@ -72,19 +77,28 @@ public class DocumentService
     /// </remarks>
     /// <param name="documentId">O id do documento a ser buscado</param>
     /// <returns>Uma stream com o conteudo do arquivo ou null se o arquivo nao existe</returns>
-    public Stream? GetDocumentContent(Guid documentId)
+    public async Task<Stream?> GetDocumentContent(Guid documentId)
     {
-        var fs = database.GetStorage<Guid>();
-        
-        var file = fs.FindById(documentId);
-        if (file is null)
+        var document = GetDocument(documentId);
+        if (document is null)
         {
+            logger.LogWarning("Document {DocumentId} not found", documentId);
             return null;
         }
-        var stream = new MemoryStream();
-        file.CopyTo(stream);
-        stream.Position = 0;
-        return stream;
+        var rendered = await renderer.RenderAsync(document);
+        if (rendered is null)
+        {
+            logger.LogWarning("Failed to render document {DocumentId}", documentId);
+            return null;
+        }
+
+        var fs = database.GetStorage<Guid>();
+        MemoryStream ms = new();
+        var fileStream = fs.OpenRead(rendered.Id);
+        fileStream.CopyTo(ms);
+        fileStream.Dispose();
+        ms.Seek(0, SeekOrigin.Begin);
+        return ms;
     }
     
     /// <summary>

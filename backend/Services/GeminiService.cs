@@ -26,26 +26,29 @@ namespace backend.Services
                 logger.LogError("Nao foi possivel fazer requisicao para Gemini. Nao foram encontradas chaves");
                 return "Erro na requisicao para gemini API.";
             }
+
             for (int i = 0; i < keys.Count; i++) {
                 string key = keys[i];
                 string url = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={key}";
-                HttpRequestMessage request = new(HttpMethod.Post, url);
-                request.Content = new StringContent(
-                    $$"""
-                    {
-                        "contents": [
-                            {
-                                "parts": [
-                                    {
-                                        "text": "Resuma o seguinte texto de forma breve e objetiva:\n{{input.Replace("\"", "\\\"").Replace("\n", "\\n")}}"
-                                    }
-                                ]
-                            }
-                        ]
-                    }
-                    """,
-                    MediaTypeHeaderValue.Parse("application/json")
-                );
+                HttpRequestMessage request = new(HttpMethod.Post, url)
+                {
+                    Content = new StringContent(
+                        content: $$"""
+                        {
+                            "contents": [
+                                {
+                                    "parts": [
+                                        {
+                                            "text": "Resuma o seguinte texto de forma breve e objetiva:\n{{input.Replace("\"", "\\\"").Replace("\n", "\\n")}}"
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                        """,
+                        mediaType: MediaTypeHeaderValue.Parse("application/json")
+                    )
+                };
                 var response = await httpClient.SendAsync(request);
                 if (!response.IsSuccessStatusCode)
                 {

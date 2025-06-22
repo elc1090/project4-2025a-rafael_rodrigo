@@ -11,10 +11,12 @@ namespace backend.Controllers;
 public class DocumentController : ControllerBase
 {
     private readonly DocumentService docService;
+    private readonly ILogger<DocumentController> logger;
 
-    public DocumentController(DocumentService docService)
+    public DocumentController(DocumentService docService, ILogger<DocumentController> logger)
     {
         this.docService = docService;
+        this.logger = logger;
     }
 
     [HttpGet("dashboard")]
@@ -29,11 +31,23 @@ public class DocumentController : ControllerBase
         return Ok(paginatedDocuments);
     }
     
-    [HttpGet("user/{userId}")]
+    [HttpGet("user/{userId:guid}")]
+    [Authenticated]
     public IActionResult GetUserDocuments(Guid userId, int limit = 10, int offset = 0)
     {
+        Guid loggedUser = HttpContext.GetLoggedUser();
         var documents = docService.GetUserDocuments(userId);
         var paginatedDocuments = documents
+            .Where(x =>
+            {
+                // se eh consulta de outro usuario, oculta os documentos privados
+                if (loggedUser == userId) {
+                    return true;
+                }
+                else {
+                    return x.IsPublic;
+                }
+            })
             .Skip(offset)
             .Take(limit)
             .ToList();
@@ -41,23 +55,66 @@ public class DocumentController : ControllerBase
         return Ok(paginatedDocuments);
     }
 
-    [HttpGet("{documentId:guid}")]
-    public IActionResult GetDocument(Guid documentId) {
-        CompiledDocument? document = docService.GetDocument(documentId);
+    [HttpGet("{documentId:guid}/pdf")]
+    [Authenticated]
+    public async Task<IActionResult> GetDocumentPdf(Guid documentId) {
+        Guid loggedUser = HttpContext.GetLoggedUser();
+        Models.Document? document = docService.GetDocument(documentId);
         if (document is null) {
             return NotFound("Documento nao encontrado");
         }
-        Stream? documentStream = docService.GetDocumentContent(documentId);
+
+        // autorizacao
+        if(loggedUser != document.Owner && !document.IsPublic)
+        {
+            logger.LogInformation("Usuario {UserId} tentou acessar documento {DocumentId} que nao eh publico e eh de outro user", loggedUser, documentId);
+            return NotFound("Documento nao encontrado");
+        }
+
+        Stream? documentStream = await docService.GetDocumentContent(documentId);
         if (documentStream is null) {
             return NotFound("Documento nao encontrado");
         }
         // documentStream is disposed by File()
-        return File(documentStream, "application/octet-stream", $"{document.Name}-{Convert.ToHexString(documentId.ToByteArray()[..4]):X2}.pdf");
+        return File(documentStream, "application/octet-stream", $"{document.Title}-{document.CurrentVersion[..4]}.pdf");
+    }
+
+    [HttpGet("{documentId:guid}/data")]
+    [Authenticated]
+    public IActionResult GetDocumentData(Guid documentId)
+    {
+        Guid loggedUser = HttpContext.GetLoggedUser();
+        Models.Document? document = docService.GetDocument(documentId);
+        if (document is null)
+        {
+            return NotFound("Documento nao encontrado");
+        }
+        // autorizacao
+        if(document.Owner != loggedUser && !document.IsPublic)
+        {
+            logger.LogInformation("Usuario {UserId} tentou acessar documento {DocumentId} que nao eh publico e eh de outro user", loggedUser, documentId);
+            return NotFound("Documento nao encontrado");
+        }
+        return Ok(document);
+    }
+
+    [Authenticated]
+    [HttpPost("new")]
+    public IActionResult NewDocument([FromBody] CreateDocumentForm createDocumentForm)
+    {
+        if(createDocumentForm.Language != DocumentLanguage.Latex && createDocumentForm.Language != DocumentLanguage.Markdown)
+        {
+            return BadRequest("A linguagem do documento deve ser Latex ou Markdown");
+        }
+
+        Guid userId = HttpContext.GetLoggedUser();
+        
+
     }
 
     [Authenticated]
     [HttpPost("register")]
-    public IActionResult RegisterDocument([FromBody] RegisterDocumentForm documentRegistration)
+    public IActionResult RegisterDocument([FromBody] CreateDocumentForm documentRegistration)
     {
         if (documentRegistration.Language == DocumentLanguage.Pdf || documentRegistration.Language == DocumentLanguage.Unknown)
         {
