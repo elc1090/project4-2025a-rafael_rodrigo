@@ -19,4 +19,15 @@ public class DocumentLink
     /// Id do documento ao qual este link esta associado.
     /// </summary>
     public Guid DocumentId { get; set; } = Guid.Empty;
+
+    /// <summary>
+    /// Se o link deve sempre apontar pra versao mais nova do documento
+    /// </summary>
+    public bool UseLatest { get; set; } = true;
+
+    /// <summary>
+    /// Caso <see cref="UseLatest"/> seja <see langword="false"/>, esse campo determina
+    /// a versao especifica do documento que este link deve apontar. 
+    /// </summary>
+    public string? DocumentVersion { get;set; }
 }
