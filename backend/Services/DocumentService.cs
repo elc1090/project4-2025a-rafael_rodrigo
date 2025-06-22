@@ -106,34 +106,34 @@ public class DocumentService
     /// </summary>
     /// <param name="document">O objeto com os metadados do documento</param>
     /// <param name="content">Uma stream com o conteudo do arquivo</param>
-    private void AddDocument(CompiledDocument document, Stream content)
+    public bool AddDocument(Document document)
     {
         if (document.Id == Guid.Empty)
         {
-            throw new ArgumentException("Document ID cannot be empty");
+            logger.LogError("Document ID cannot be empty");
+            return false;
         }
-        if (string.IsNullOrEmpty(document.Name))
+        ArgumentException.ThrowIfNullOrWhiteSpace(document.Title);
+        if (document.Owner == Guid.Empty)
         {
-            throw new ArgumentException("Document name cannot be empty");
+            logger.LogError("Document owner cannot be empty");
+            return false;
         }
-        if (document.UserId == Guid.Empty)
+        document.CurrentVersion = Document.CalculateVersion(document.SourceCode, document.DocumentLanguage);
+
+        var col = database.GetCollection<Document>();
+        col.EnsureIndex(x => x.Id);
+        col.EnsureIndex(x => x.Owner);
+        try
         {
-            throw new ArgumentException("User ID cannot be empty");
-        }
-        
-        var col = database.GetCollection<CompiledDocument>();
-        col.EnsureIndex(x => x.UserId);
-        try {
-            col.Insert(document);
-        } catch (LiteException) {
-            // deu algo errado na parte do servidor, esse arquivo ja existe
-            // talvez falhou da ultima vez. deletamos a anterior pq sim e substitui por essa
-            col.Delete(document.Id);
             col.Insert(document);
         }
-        
-        var fs = database.GetStorage<Guid>();
-        var fileinfo = fs.Upload(document.Id, document.Name, content);
+        catch (LiteException)
+        {
+            logger.LogWarning("Document with ID {DocumentId} already exists. Trying to update it instead", document.Id);
+            col.Update(document.Id, document);
+        }
+        return true;
     }
     
     /// <summary>

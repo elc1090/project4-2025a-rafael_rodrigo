@@ -19,4 +19,9 @@ public class CreateDocumentForm
     /// O codigo submitado pelo usuario. Pode ser Markdown ou Latex.
     /// </summary>
     public string SourceCode { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Define se o documento pode ser visto por outros usuarios.
+    /// </summary>
+    public bool IsPublic { get; set; } = true;
 }

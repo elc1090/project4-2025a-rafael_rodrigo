@@ -12,11 +12,13 @@ public class DocumentController : ControllerBase
 {
     private readonly DocumentService docService;
     private readonly ILogger<DocumentController> logger;
+    private readonly UserService userService;
 
-    public DocumentController(DocumentService docService, ILogger<DocumentController> logger)
+    public DocumentController(DocumentService docService, ILogger<DocumentController> logger, UserService userService)
     {
         this.docService = docService;
         this.logger = logger;
+        this.userService = userService;
     }
 
     [HttpGet("dashboard")]
@@ -108,77 +110,27 @@ public class DocumentController : ControllerBase
         }
 
         Guid userId = HttpContext.GetLoggedUser();
-        
 
-    }
-
-    [Authenticated]
-    [HttpPost("register")]
-    public IActionResult RegisterDocument([FromBody] CreateDocumentForm documentRegistration)
-    {
-        if (documentRegistration.Language == DocumentLanguage.Pdf || documentRegistration.Language == DocumentLanguage.Unknown)
+        Models.Document document = new()
         {
-            return BadRequest("A linguagem do documento nao pode ser PDF ou Unknown");
-        }
-
-        Guid userId = (Guid)HttpContext.Items["UserId"];
-        if (userId == Guid.Empty)
-        {
-            return Unauthorized("Usuario nao encontrado");
-        }
-
-        Guid docId = docService.RegisterDocumentMetadata(userId, documentRegistration.Name, documentRegistration.Language);
-        
-        return Ok(new { documentId = docId });
-    }
-    
-    [Authenticated]
-    [HttpPost("upload/{documentId:guid}")]
-    public async Task<IActionResult> UploadDocument(Guid documentId, IFormFile file)
-    {
-        if (file.Length == 0)
-        {
-            return BadRequest("Arquivo vazio");
-        }
-
-        Guid userId = (Guid)HttpContext.Items["UserId"];
-        if (userId == Guid.Empty)
-        {
-            return Unauthorized("Usuario nao encontrado");
-        }
-        RawDocument? meta = docService.GetDocumentMetadata(documentId);
-        if (meta is null)
-        {
-            return NotFound("Documento nao encontrado");
-        }
-
-        // verifica se o documento pertence ao usuario
-        if (meta.Owner != userId) {
-            return Unauthorized("Usuario nao autorizado a fazer upload deste documento");
-        }
-
-        Stream fileStream = file.OpenReadStream();
-        // compilar o arquivo
-        Stream? compiledStream = await docService.CompileDocument(documentId, fileStream);
-        fileStream.Dispose();
-        if (compiledStream is null)
-        {
-            return BadRequest("Erro ao compilar o documento");
-        }
-        
-        CompiledDocument compiled = docService.UploadDocument(meta, compiledStream);
-        docService.RemoveDocumentMetadata(documentId);
-
-        return Ok(new { documentId = compiled.Id });
+            Id = Guid.NewGuid(),
+            Owner = userId,
+            Title = createDocumentForm.Name,
+            CurrentVersion = Models.Document.CalculateVersion(createDocumentForm.SourceCode, createDocumentForm.Language),
+            IsPublic = createDocumentForm.IsPublic,
+            DocumentLanguage = createDocumentForm.Language,
+            LastModificationTime = DateTime.UtcNow,
+            SourceCode = createDocumentForm.SourceCode
+        };
+        logger.LogInformation("Usuario {UserId} criou um novo documento {DocumentId} ({DocumentTitle})", userId, document.Id, document.Title);
+        bool success = docService.AddDocument(document);
+        return success ? Ok() : StatusCode(500);
     }
 
     [Authenticated]
     [HttpGet("delete")]
     public IActionResult DeleteDocument(Guid documentId) {
-        Guid userId = (Guid)HttpContext.Items["UserId"];
-        if (userId == Guid.Empty) {
-            return Unauthorized("Usuario nao encontrado");
-        }
+        Guid userId = HttpContext.GetLoggedUser();
 
         var doc = docService.GetDocument(documentId);
         if (doc is null) {
@@ -186,7 +138,7 @@ public class DocumentController : ControllerBase
         }
 
         // verifica se o documento pertence ao usuario
-        if (doc.UserId != userId) {
+        if (doc.Owner != userId) {
             return Unauthorized("Usuario nao autorizado a deletar este documento");
         }
 
@@ -198,7 +150,7 @@ public class DocumentController : ControllerBase
     [Authenticated]
     [HttpGet("rename")]
     public IActionResult RenameDocument(Guid documentId, string newName) {
-        Guid userId = (Guid)HttpContext.Items["UserId"];
+        Guid userId = HttpContext.GetLoggedUser();
         if (userId == Guid.Empty) {
             return Unauthorized("Usuario nao encontrado");
         }
@@ -209,7 +161,7 @@ public class DocumentController : ControllerBase
         }
 
         // verifica se o documento pertence ao usuario
-        if (doc.UserId != userId) {
+        if (doc.Owner != userId) {
             return Unauthorized("Usuario nao autorizado a renomear este documento");
         }
 
