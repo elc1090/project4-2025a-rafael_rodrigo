@@ -45,6 +45,13 @@ public class LinkService
         return shortLink;
     }
 
+    public void DeleteLinks(Guid documentId)
+    {
+        var coll = userService.Database.GetCollection<DocumentLink>();
+        coll.EnsureIndex(x => x.DocumentId);
+        coll.DeleteMany(x => x.DocumentId == documentId);
+    }
+
     private static string GenerateShortLink()
     {
         int words = 3;

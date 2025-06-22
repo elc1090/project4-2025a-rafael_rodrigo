@@ -39,6 +39,9 @@ public class Document
     /// </summary>
     public string SourceCode { get; set; } = string.Empty;
 
+    /// <summary>
+    /// Data da ultima modificacao
+    /// </summary>
     public DateTime LastModificationTime { get; set; } = DateTime.UtcNow;
 
     /// <summary>

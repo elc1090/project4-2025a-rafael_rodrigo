@@ -169,4 +169,29 @@ public class DocumentController : ControllerBase
         
         return Ok("Documento renomeado com sucesso");
     }
+
+    [Authenticated]
+    [HttpPut("update")]
+    public IActionResult UpdateDocument(Guid documentId, [FromBody] string newSourceCode)
+    {
+        Guid userId = HttpContext.GetLoggedUser();
+        var document = docService.GetDocument(documentId);
+        if (document is null)
+        {
+            return NotFound("Documento nao encontrado");
+        }
+
+        // verifica se o documento pertence ao usuario
+        if (document.Owner != userId)
+        {
+            return Unauthorized("Usuario nao autorizado a atualizar este documento");
+        }
+
+        // atualiza o codigo fonte e a versao
+        document.SourceCode = newSourceCode;
+        document.CurrentVersion = Models.Document.CalculateVersion(newSourceCode, document.DocumentLanguage);
+        document.LastModificationTime = DateTime.UtcNow;
+        docService.Update(document);
+        return Ok();
+    }
 }

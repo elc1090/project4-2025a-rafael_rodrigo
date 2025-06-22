@@ -1,5 +1,6 @@
 ﻿using backend.Models;
 using LiteDB;
+using Microsoft.AspNetCore.Mvc;
 using System.Net;
 
 namespace backend.Services;
@@ -13,14 +14,16 @@ public class DocumentService
     private readonly HttpClient httpClient;
     private readonly RendererService renderer;
     private readonly ILogger<DocumentService> logger;
+    private readonly LinkService linkService;
 
 
-    public DocumentService(UserService userService, HttpClient httpClient, RendererService renderer, ILogger<DocumentService> logger)
+    public DocumentService(UserService userService, HttpClient httpClient, RendererService renderer, ILogger<DocumentService> logger, LinkService linkService)
     {
         this.userService = userService;
         this.httpClient = httpClient;
         this.renderer = renderer;
         this.logger = logger;
+        this.linkService = linkService;
     }
 
     private LiteDatabase database => userService.Database;
@@ -142,160 +145,47 @@ public class DocumentService
     /// <param name="documentId">O id do documento a ser removido</param>
     public void RemoveDocument(Guid documentId)
     {
-        var col = database.GetCollection<CompiledDocument>();
-        col.Delete(documentId);
-        
+        var docCol = database.GetCollection<Document>();
+        var renderCol = database.GetCollection<RenderedDocument>();
         var fs = database.GetStorage<Guid>();
-        fs.Delete(documentId);
-    }
-
-    
-    /// <summary>
-    /// Cria um novo objeto de intencao de criacao de documento.
-    /// </summary>
-    /// <param name="owner">O id do dono do documento</param>
-    /// <param name="name">O titulo do documento</param>
-    /// <returns>O id unico do documento</returns>
-    public Guid RegisterDocumentMetadata(Guid owner, string name, DocumentLanguage language)
-    {
-        var col = database.GetCollection<RawDocument>();
-        col.EnsureIndex(x => x.Id);
-        RawDocument doc = new()
-        {
-            Id = Guid.NewGuid(),
-            Owner = owner,
-            Name = name,
-            Language = language
-        }; 
-        Console.WriteLine($"Document {doc.Id} registered");
-        col.Insert(doc);
-        return doc.Id;
-    }
-
-    /// <summary>
-    /// Retorna os metadados de um documento que nao foi terminado ainda.
-    /// </summary>
-    /// <param name="documentId">O id do documento</param>
-    /// <returns>Retorna o objeto com os metadados ou null se ele nao existe</returns>
-    public RawDocument? GetDocumentMetadata(Guid documentId)
-    {
-        var col = database.GetCollection<RawDocument>();
-        col.EnsureIndex(x => x.Id);
-        RawDocument? doc = col.Query()
+        
+        // limpa documento
+        var doc = docCol.Query()
             .Where(x => x.Id == documentId)
             .FirstOrDefault();
-        return doc;
-    }
-    
-    /// <summary>
-    /// Remove os metadados de um arquivo nao terminado.
-    /// </summary>
-    /// <param name="documentId">O id do documento cujos metadados serao deletados</param>
-    public void RemoveDocumentMetadata(Guid documentId)
-    {
-        var col = database.GetCollection<RawDocument>();
-        col.Delete(documentId);
-    }
-    
-    public CompiledDocument UploadDocument(RawDocument document, Stream content)
-    {
-        CompiledDocument doc = new()
+        docCol.Delete(documentId);
+
+        // limpa renderizacoes
+        var renders = renderCol.Find(x => x.DocumentId == documentId);
+        foreach(var render in renders)
         {
-            Id = document.Id,
-            Name = document.Name,
-            UserId = document.Owner,
-            Created = DateTime.UtcNow,
-        };
-        AddDocument(doc, content);
-        return doc;
+            fs.Delete(render.Id);
+        }
+        renderCol.DeleteMany(x => x.DocumentId == documentId);
+
+        // limpa links
+        linkService.DeleteLinks(documentId);
     }
 
-    /// <summary>
-    /// Compila um documento.
-    /// </summary>
-    /// <param name="documentId">O id do documento a ser compilado</param>
-    /// <param name="input">O conteudo do arquivo de entrada</param>
-    /// <returns>Uma stream com o resultado ou null se o arquivo nao existe</returns>
-    public async Task<Stream?> CompileDocument(Guid documentId, Stream input)
-    {
-        RawDocument? metadata = GetDocumentMetadata(documentId);
-        if (metadata is null)
-        {
-            return null;
-        }
-
-        string compilerBaseUrl = "http://latex-processor/compile";
-        HttpMethod method = HttpMethod.Post;
-        DocumentLanguage lang = metadata.Language;
-
-        if(lang == DocumentLanguage.Markdown) {
-            string url = compilerBaseUrl + "/markdown";
-
-            var headers = new Dictionary<string, string>
-            {
-                { "output-type", "pdf" },
-            };
-            var fileContent = new StreamContent(input);
-            fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/x-md");
-            var request = new HttpRequestMessage(method, url) {
-                Content = fileContent
-            };
-            foreach (var header in headers) {
-                request.Headers.Add(header.Key, header.Value);
-            }
-
-            var response = await httpClient.SendAsync(request);
-            if (response.StatusCode != HttpStatusCode.OK) {
-                Console.WriteLine($"Erro ao compilar o documento: {response.StatusCode}. " +
-                    $"Message: " + await response.Content.ReadAsStringAsync());
-                return null;
-            }
-
-            var responseStream = await response.Content.ReadAsStreamAsync();
-            return responseStream;
-
-
-        } else if(lang == DocumentLanguage.Latex) {
-            string url = compilerBaseUrl + "/latex";
-
-            var headers = new Dictionary<string, string>
-            {
-                { "snippet", "false" },
-                { "debug", "false" },
-            };
-            var fileContent = new StreamContent(input);
-
-            fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/x-tex");
-            var request = new HttpRequestMessage(method, url) {
-                Content = fileContent
-            };
-            foreach (var header in headers) {
-                request.Headers.Add(header.Key, header.Value);
-            }
-            var response = await httpClient.SendAsync(request);
-
-            if (response.StatusCode != HttpStatusCode.OK) {
-                Console.WriteLine($"Erro ao compilar o documento: {response.StatusCode}. " +
-                    $"Message: " + await response.Content.ReadAsStringAsync());
-                return null;
-            }
-            var responseStream = await response.Content.ReadAsStreamAsync();
-            return responseStream;
-        } else {
-            return null;
-        }
-    }
 
     public void UpdateName(Guid documentId, string newName) {
-        var col = database.GetCollection<CompiledDocument>();
+        var col = database.GetCollection<Document>();
         col.EnsureIndex(x => x.Id);
-        CompiledDocument? doc = col.Query()
+        Document? doc = col.Query()
             .Where(x => x.Id == documentId)
             .FirstOrDefault();
         if (doc is null) {
-            throw new ArgumentException("Document not found");
+            logger.LogWarning("Tentei atualizar nome de documento {DocumentId}, mas ele nao existe", documentId);
+            return;
         }
-        doc.Name = newName;
+        doc.Title = newName;
         col.Update(doc);
+    }
+
+    public void Update(Document document)
+    {
+        var col = database.GetCollection<Document>();
+        col.EnsureIndex(x => x.Id);
+        col.Update(document.Id, document);
     }
 }
