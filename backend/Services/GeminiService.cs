@@ -18,7 +18,7 @@ namespace backend.Services
             this.httpClient = http;
         }
 
-        public async Task<string> Summarize(string input)
+        public async Task<string> SummarizeAsync(string input)
         {
             List<string>? keys = configuration.GetSection("GeminiKeys").Get<List<string>>();
             if(keys is null || keys.Count == 0)

@@ -1,6 +1,7 @@
 ﻿using backend.Filters;
 using backend.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.OpenApi.Any;
 
 namespace backend.Controllers;
 
@@ -9,10 +10,12 @@ namespace backend.Controllers;
 public class AIController : ControllerBase
 {
     private readonly GeminiService gemini;
+    private readonly DocumentService documentService;
 
-    public AIController(GeminiService gemini)
+    public AIController(GeminiService gemini, DocumentService documentService)
     {
         this.gemini = gemini;
+        this.documentService = documentService;
     }
 
     [Authenticated]
@@ -23,10 +26,21 @@ public class AIController : ControllerBase
         {
             return BadRequest("Document ID cannot be empty.");
         }
+        var doc = documentService.GetDocument(documentId);
+        Guid loggedUser = HttpContext.GetLoggedUser();
+        if (doc is null)
+        {
+            return NotFound("Document not found.");
+        }
+        // authorization
+        if (loggedUser != doc.Owner && !doc.IsPublic)
+        {
+            return NotFound("Document not found.");
+        }
+
         try
         {
-            //string summary = await gemini.SummarizeDocumentAsync(documentId);
-            string summary = "";
+            string summary = await gemini.SummarizeAsync(doc.SourceCode);
             return Ok(summary);
         }
         catch (Exception ex)
