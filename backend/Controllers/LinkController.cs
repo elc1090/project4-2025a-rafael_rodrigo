@@ -35,7 +35,7 @@ public class LinkController : ControllerBase
             logger.LogInformation("Link not found for shortname: {Shortname}", shortname);
             return NotFound("Link not found.");
         }
-        string url = $"http://web-t3.rodrigoappelt.com:8080/api/document/{documentId}";
+        string url = $"http://web-t3.rodrigoappelt.com:8080/api/document/{documentId}/pdf";
         logger.LogInformation("Redirecting to URL: {Url} for shortname: {Shortname}", url, shortname);
         return Redirect(url);
     }
@@ -70,7 +70,7 @@ public class LinkController : ControllerBase
             return StatusCode(500, "Failed to create link.");
         }
         logger.LogInformation("Created link with shortname: {ShortLink} for document ID: {DocumentId}", link, documentId);
-        string pdfUrl = $"http://web-t3.rodrigoappelt.com:8080/api/document/{documentId}";
+        string pdfUrl = $"http://web-t3.rodrigoappelt.com:8080/api/document/{documentId}/pdf";
         string shortUrl = $"http://web-t3.rodrigoappelt.com:8080/api/share/{link}";
         return Ok(new { 
             shortname = link,
