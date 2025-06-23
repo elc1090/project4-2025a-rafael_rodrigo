@@ -68,30 +68,12 @@ namespace backend.Services
                 logger.LogInformation("Lendo content");
                 string json = await response.Content.ReadAsStringAsync();
                 logger.LogInformation("Content json: " + json);
-                logger.LogInformation("Deserializando");
-                GeminiResponse? geminiResponse = JsonSerializer.Deserialize<GeminiResponse>(json);
-                logger.LogInformation("deserializado" + (geminiResponse is null ? "null" : "notnull"));
-                if(geminiResponse is null)
-                {
-                    logger.LogError("GeminiResponse is null. Nao foi possivel deserializar a resposta do Gemini.");
-                    return "Erro na requisicao para gemini API.";
-                }
-                if (geminiResponse.Candidates is null || geminiResponse.Candidates.Count == 0)
-                {
-                    logger.LogError("GeminiResponse.Candidates is null or empty. Nao foi possivel obter resposta do Gemini.");
-                    return "Erro na requisicao para gemini API.";
-                }
-                if (geminiResponse.Candidates[0].Content is null)
-                {
-                    logger.LogError("GeminiResponse.Candidates[0].Content Nao foi possivel obter resposta do Gemini.");
-                    return "Erro na requisicao para gemini API.";
-                }
-                if (geminiResponse.Candidates[0].Content.Parts is null || geminiResponse.Candidates[0].Content.Parts.Count == 0)
-                {
-                    logger.LogError("GeminiResponse.Candidates[0].Content.Parts is null or empty. Nao foi possivel obter resposta do Gemini.");
-                    return "Erro na requisicao para gemini API.";
-                }
-                string summary = geminiResponse.Candidates[0].Content.Parts[0].Text;
+                using JsonDocument doc = JsonDocument.Parse(json);
+                var candidates = doc.RootElement.GetProperty("candidates");
+                var contentJ = candidates[0].GetProperty("content");
+                var parts = contentJ.GetProperty("parts");
+                var part = parts[0];
+                string summary = part.GetProperty("text").GetString() ?? "null";
                 logger.LogInformation("Resposta do Gemini: {Response}", summary);
                 return summary;
             }
