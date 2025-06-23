@@ -23,26 +23,26 @@ function CommunityTab({ token }) {
             if (response.ok) {
                 const docs = await response.json();
                 console.log('Documentos recebidos:', docs);
-                const userIds = [...new Set(docs.map(doc => doc.userId))];
+                const owners = [...new Set(docs.map(doc => doc.owner))];
                 const namesObject = {};
-                await Promise.all(userIds.map(async (userId) => {
+                await Promise.all(owners.map(async (owner) => {
                     try {
-                        const userResponse = await fetch(`http://web-t3.rodrigoappelt.com:8080/api/User/${userId}`, {
+                        const userResponse = await fetch(`http://web-t3.rodrigoappelt.com:8080/api/User/${owner}`, {
                             headers: { 'Authorization': 'Bearer ' + token }
                         });
                         if (userResponse.ok) {
                             const userData = await userResponse.json();
-                            namesObject[userId] = userData.name;
+                            namesObject[owner] = userData.name;
                         } else {
-                            namesObject[userId] = 'Usuário Desconhecido';
+                            namesObject[owner] = 'Usuário Desconhecido';
                         }
                     } catch (error) {
-                        console.error(`Erro ao buscar usuário ${userId}:`, error);
-                        namesObject[userId] = 'Usuário Desconhecido';
+                        console.error(`Erro ao buscar usuário ${owner}:`, error);
+                        namesObject[owner] = 'Usuário Desconhecido';
                     }
                 }));
                 docs.forEach(doc => {
-                    doc.userName = namesObject[doc.userId];
+                    doc.userName = namesObject[doc.owner];
                 });
                 console.log('Documentos da comunidade carregados:', docs);
                 setDocuments(docs);
