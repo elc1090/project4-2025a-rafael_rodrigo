@@ -54,6 +54,7 @@ public class AIController : ControllerBase
         }
         catch (Exception ex)
         {
+            logger.LogError($"{ex.Message}, {ex.StackTrace}");
             return StatusCode(500, $"Internal server error: {ex.Message}");
         }
 
