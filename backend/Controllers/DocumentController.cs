@@ -58,27 +58,27 @@ public class DocumentController : ControllerBase
     }
 
     [HttpGet("{documentId:guid}/pdf")]
-    [Authenticated]
+    //[Authenticated] autenticacao opcional
     public async Task<IActionResult> GetDocumentPdf(Guid documentId) {
-        Guid loggedUser = HttpContext.GetLoggedUser();
+        //Guid loggedUser = HttpContext.GetLoggedUser();
         Models.Document? document = docService.GetDocument(documentId);
         if (document is null) {
             return NotFound("Documento nao encontrado");
         }
 
         // autorizacao
-        if(loggedUser != document.Owner && !document.IsPublic)
+        if (document.IsPublic || (HttpContext.IsAuthorized() && userService.GetUserByToken(HttpContext.GetBearerToken()) == document.Owner))
         {
-            logger.LogInformation("Usuario {UserId} tentou acessar documento {DocumentId} que nao eh publico e eh de outro user", loggedUser, documentId);
-            return NotFound("Documento nao encontrado");
+            Stream? documentStream = await docService.GetDocumentContent(documentId);
+            if (documentStream is null) {
+                return NotFound("Documento nao encontrado");
+            }
+            // documentStream is disposed by File()
+            return File(documentStream, "application/octet-stream", $"{document.Title}-{document.CurrentVersion[..4]}.pdf");
         }
+        logger.LogInformation("Alguem tentou acessar documento {DocumentId} que nao eh publico", documentId);
+        return NotFound("Documento nao encontrado");
 
-        Stream? documentStream = await docService.GetDocumentContent(documentId);
-        if (documentStream is null) {
-            return NotFound("Documento nao encontrado");
-        }
-        // documentStream is disposed by File()
-        return File(documentStream, "application/octet-stream", $"{document.Title}-{document.CurrentVersion[..4]}.pdf");
     }
 
     [HttpGet("{documentId:guid}/data")]
