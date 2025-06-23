@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './CommunityTab.css';
+import { copyShareLink } from './shareUtils';
 
 function CommunityTab({ token }) {
     const [documents, setDocuments] = useState([]);
@@ -189,13 +190,54 @@ function CommunityTab({ token }) {
                                 </button>
                                 <button
                                     className="action-button secondary"
-                                    onClick={() => {
-                                        navigator.clipboard.writeText(`http://web-t3.rodrigoappelt.com:8080/api/document/download/${doc.id}`);
-                                        alert('Link copiado!');
+                                    onClick={async () => {
+                                        const result = await copyShareLink(doc.id, token);
+                                        if (result.success) {
+                                            // Criar toast de sucesso
+                                            const toastElement = document.createElement('div');
+                                            toastElement.className = 'custom-toast toast-success';
+                                            toastElement.innerHTML = `
+                                                <div class="toast-content">
+                                                    <div class="toast-icon">✅</div>
+                                                    <div class="toast-message">
+                                                        <strong>Link compartilhado criado!</strong><br>
+                                                        <small>Código: ${result.shortname}</small><br>
+                                                        <small style="word-break: break-all;">${result.url}</small>
+                                                    </div>
+                                                    <button class="toast-close" onclick="this.parentElement.parentElement.remove()">✕</button>
+                                                </div>
+                                            `;
+                                            toastElement.style.cssText = `
+                                                position: fixed;
+                                                top: 20px;
+                                                right: 20px;
+                                                z-index: 9999;
+                                                background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+                                                color: white;
+                                                padding: 12px 16px;
+                                                border-radius: 8px;
+                                                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+                                                max-width: 400px;
+                                                animation: slideInRight 0.3s ease;
+                                            `;
+                                            
+                                            document.body.appendChild(toastElement);
+                                            
+                                            setTimeout(() => {
+                                                if (toastElement.parentElement) {
+                                                    toastElement.style.animation = 'slideOutRight 0.3s ease';
+                                                    setTimeout(() => {
+                                                        toastElement.remove();
+                                                    }, 300);
+                                                }
+                                            }, 5000);
+                                        } else {
+                                            alert(`Erro ao compartilhar: ${result.error}`);
+                                        }
                                     }}
                                 >
                                     <span>🔗</span>
-                                    Copiar Link
+                                    Compartilhar
                                 </button>
                             </div>
                         </div>

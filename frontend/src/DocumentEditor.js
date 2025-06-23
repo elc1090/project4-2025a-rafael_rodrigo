@@ -658,7 +658,7 @@ Conclusões finais...
                             lineHeight: 24,
                             letterSpacing: 0.5,
                             lineNumbers: 'on',
-                            rulers: [80],
+                            rulers: [0],
                             wordWrap: 'on',
                             automaticLayout: true,
                             scrollBeyondLastLine: false,

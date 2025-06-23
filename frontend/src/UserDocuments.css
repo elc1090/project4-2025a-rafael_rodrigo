@@ -417,6 +417,10 @@
     background: rgba(255, 255, 255, 0.1);
 }
 
+.custom-toast.toast-error {
+    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%) !important;
+}
+
 /* Novos estilos para botões de ação e modal */
 .action-button.info {
     background: #ffffff;
