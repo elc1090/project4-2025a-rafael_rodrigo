@@ -30,14 +30,7 @@ namespace backend.Services
 
             string sanitized = input.Trim().Replace("\n","\\n").Replace("\r","\\r").Replace("\"", "\\\"").Replace("\\","\\\\");
 
-
-
-            for (int i = 0; i < keys.Count; i++) {
-                string key = keys[i];
-                string url = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={key}";
-                HttpRequestMessage request = new(HttpMethod.Post, url)
-                {
-                    Content = new StringContent(
+            StringContent content = new(
                         content: $$"""
                         {
                             "contents": [
@@ -52,7 +45,15 @@ namespace backend.Services
                         }
                         """,
                         mediaType: MediaTypeHeaderValue.Parse("application/json")
-                    )
+                    );
+
+            logger.LogInformation("Tentando fazer request pra ai com {i} chaves", keys.Count);
+            for (int i = 0; i < keys.Count; i++) {
+                string key = keys[i];
+                string url = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={key}";
+                HttpRequestMessage request = new(HttpMethod.Post, url)
+                {
+                    Content = content
                 };
                 var response = await httpClient.SendAsync(request);
                 if (!response.IsSuccessStatusCode)
@@ -60,8 +61,12 @@ namespace backend.Services
                     logger.LogError("StatusCode: {Code}; Reason: {Reason}; Content: {Content}", response.StatusCode, response.ReasonPhrase, await response.Content.ReadAsStringAsync());
                     continue;
                 }
-                using var responseStream = await response.Content.ReadAsStreamAsync();
-                using JsonDocument jsonDoc = await JsonDocument.ParseAsync(responseStream);
+                else
+                {
+                    logger.LogInformation("Requisicao para Gemini feita com sucesso. Chave {i} utilizada", i);
+                }
+                using JsonDocument jsonDoc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+                logger.LogInformation("Resposta da Gemini: {Response}", jsonDoc.RootElement.ToString());
                 string summary = jsonDoc.RootElement.GetProperty("candidates")![0].GetProperty("parts")![0].GetProperty("text")!.GetString()!;
                 return summary;
             }
