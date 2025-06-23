@@ -29,8 +29,8 @@ namespace backend.Services
             }
 
             string sanitized = input.Trim().Replace("\n","\\n").Replace("\r","\\r").Replace("\"", "\\\"").Replace("\\","\\\\");
-
-            StringContent content = new(
+            
+            using StringContent content = new(
                         content: $$"""
                         {
                             "contents": [
@@ -51,11 +51,11 @@ namespace backend.Services
             for (int i = 0; i < keys.Count; i++) {
                 string key = keys[i];
                 string url = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={key}";
-                HttpRequestMessage request = new(HttpMethod.Post, url)
+                using HttpRequestMessage request = new(HttpMethod.Post, url)
                 {
                     Content = content
                 };
-                var response = await httpClient.SendAsync(request);
+                using var response = await httpClient.SendAsync(request);
                 if (!response.IsSuccessStatusCode)
                 {
                     logger.LogError("StatusCode: {Code}; Reason: {Reason}; Content: {Content}", response.StatusCode, response.ReasonPhrase, await response.Content.ReadAsStringAsync());
@@ -65,8 +65,13 @@ namespace backend.Services
                 {
                     logger.LogInformation("Requisicao para Gemini feita com sucesso. Chave {i} utilizada", i);
                 }
-                using JsonDocument jsonDoc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
-                string summary = jsonDoc.RootElement.GetProperty("candidates")![0].GetProperty("parts")![0].GetProperty("text")!.GetString()!;
+                logger.LogInformation("Lendo content");
+                string json = await response.Content.ReadAsStringAsync();
+                logger.LogInformation("Content json: " + json);
+                logger.LogInformation("Deserializando");
+                GeminiResponse geminiResponse = JsonSerializer.Deserialize<GeminiResponse>(json)!;
+                logger.LogInformation("deserializado");
+                string summary = geminiResponse.Candidates[0].Content.Parts[0].Text;
                 logger.LogInformation("Resposta do Gemini: {Response}", summary);
                 return summary;
             }
@@ -76,4 +81,24 @@ namespace backend.Services
             return "Erro na requisicao para gemini API.";
         }
     }
+}
+
+public class GeminiResponse
+{
+    public List<Candidate> Candidates { get; set; }
+}
+
+public class Candidate
+{
+    public Content Content { get; set; }
+}
+
+public class Content
+{
+    public List<Part> Parts { get; set; }
+}
+
+public class Part
+{
+    public string Text { get; set; }
 }
