@@ -52,6 +52,7 @@ namespace backend.Services
                 var response = await httpClient.SendAsync(request);
                 if (!response.IsSuccessStatusCode)
                 {
+                    logger.LogError("StatusCode: {Code}; Reason: {Reason}; Content: {Content}", response.StatusCode, response.ReasonPhrase, await response.Content.ReadAsStringAsync());
                     continue;
                 }
                 var responseContent = await response.Content.ReadAsStringAsync();
