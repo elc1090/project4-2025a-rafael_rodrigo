@@ -223,6 +223,7 @@ function CommunityTab({ token }) {
                                             
                                             document.body.appendChild(toastElement);
                                             
+                                            // Remover após 5 segundos
                                             setTimeout(() => {
                                                 if (toastElement.parentElement) {
                                                     toastElement.style.animation = 'slideOutRight 0.3s ease';
@@ -232,12 +233,48 @@ function CommunityTab({ token }) {
                                                 }
                                             }, 5000);
                                         } else {
-                                            alert(`Erro ao compartilhar: ${result.error}`);
+                                            // Criar toast de erro
+                                            const errorToast = document.createElement('div');
+                                            errorToast.className = 'custom-toast toast-error';
+                                            errorToast.innerHTML = `
+                                                <div class="toast-content">
+                                                    <div class="toast-icon">❌</div>
+                                                    <div class="toast-message">
+                                                        <strong>Erro ao compartilhar</strong><br>
+                                                        <small>${result.error}</small>
+                                                    </div>
+                                                    <button class="toast-close" onclick="this.parentElement.parentElement.remove()">✕</button>
+                                                </div>
+                                            `;
+                                            errorToast.style.cssText = `
+                                                position: fixed;
+                                                top: 20px;
+                                                right: 20px;
+                                                z-index: 9999;
+                                                background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+                                                color: white;
+                                                padding: 12px 16px;
+                                                border-radius: 8px;
+                                                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+                                                max-width: 400px;
+                                                animation: slideInRight 0.3s ease;
+                                            `;
+                                            
+                                            document.body.appendChild(errorToast);
+                                            
+                                            setTimeout(() => {
+                                                if (errorToast.parentElement) {
+                                                    errorToast.style.animation = 'slideOutRight 0.3s ease';
+                                                    setTimeout(() => {
+                                                        errorToast.remove();
+                                                    }, 300);
+                                                }
+                                            }, 4000);
                                         }
                                     }}
                                 >
                                     <span>🔗</span>
-                                    Compartilhar
+                                    Copiar link
                                 </button>
                             </div>
                         </div>
