@@ -145,7 +145,7 @@
 
 .document-actions {
     display: flex;
-    gap: 10px;
+    gap: 8px;
     padding-top: 20px;
     border-top: 1px solid #f1f3f4;
     flex-wrap: wrap;
@@ -153,17 +153,18 @@
 
 .action-button {
     flex: 1;
-    padding: 10px 16px;
+    min-width: 90px;
+    padding: 8px 12px;
     border: none;
-    border-radius: 8px;
-    font-size: 0.9rem;
+    border-radius: 6px;
+    font-size: 0.85rem;
     font-weight: 500;
     cursor: pointer;
     transition: all 0.2s ease;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 6px;
+    gap: 4px;
     text-decoration: none;
     color: inherit;
 }
@@ -416,6 +417,133 @@
     background: rgba(255, 255, 255, 0.1);
 }
 
+/* Novos estilos para botões de ação e modal */
+.action-button.info {
+    background: #ffffff;
+    color: #17a2b8;
+    border: 1px solid #17a2b8;
+}
+
+.action-button.info:hover {
+    background: #17a2b8;
+    color: white;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(23, 162, 184, 0.3);
+}
+
+.action-button.warning {
+    background: #ffffff;
+    color: #ffc107;
+    border: 1px solid #ffc107;
+}
+
+.action-button.warning:hover {
+    background: #ffc107;
+    color: #212529;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(255, 193, 7, 0.3);
+}
+
+/* Estilos do Modal */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(44, 62, 80, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    animation: fadeIn 0.3s ease;
+}
+
+.modal-content {
+    background: #fff;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    min-width: 400px;
+    max-width: 500px;
+    width: 90%;
+    animation: slideIn 0.3s ease;
+}
+
+.modal-content.modal-large {
+    max-width: 800px;
+    width: 95%;
+}
+
+.modal-title {
+    color: #2c3e50;
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin: 0 0 20px 0;
+    text-align: center;
+}
+
+.modal-actions {
+    display: flex;
+    gap: 15px;
+    justify-content: flex-end;
+    margin-top: 25px;
+    padding-top: 20px;
+    border-top: 1px solid #f1f3f4;
+}
+
+.form-control {
+    width: 100%;
+    padding: 12px 15px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 1rem;
+    transition: border-color 0.2s;
+    font-family: inherit;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: #4ca1af;
+    box-shadow: 0 0 0 3px rgba(76, 161, 175, 0.1);
+}
+
+.source-textarea {
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 14px;
+    line-height: 1.5;
+    resize: vertical;
+    min-height: 300px;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    color: #2c3e50;
+    font-weight: 500;
+    font-size: 1rem;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideIn {
+    from { 
+        opacity: 0; 
+        transform: translateY(-20px) scale(0.95); 
+    }
+    to { 
+        opacity: 1; 
+        transform: translateY(0) scale(1); 
+    }
+}
+
 /* Responsividade */
 @media (max-width: 768px) {
     .documents-header {
@@ -436,9 +564,37 @@
 
     .document-actions {
         flex-direction: column;
+        gap: 8px;
     }
 
     .action-button {
         justify-content: center;
+        min-height: 44px;
+        min-width: auto;
+    }
+
+    .modal-content {
+        min-width: auto;
+        max-width: 95%;
+        padding: 20px;
+        margin: 20px;
+    }
+
+    .modal-content.modal-large {
+        max-width: 95%;
+    }
+
+    .modal-actions {
+        flex-direction: column;
+    }
+
+    .document-actions {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .action-button {
+        justify-content: center;
+        min-height: 44px;
     }
 }

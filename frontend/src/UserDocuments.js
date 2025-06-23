@@ -2,11 +2,13 @@ import React, { useState, useEffect } from 'react';
 import './UserDocuments.css';
 import { copyShareLink } from './shareUtils';
 
-function UserDocuments({ token, userId }) {
+function UserDocuments({ token, userId, onEditDocument }) {
     const [documents, setDocuments] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [userName, setUserName] = useState('');
+    const [renamingDoc, setRenamingDoc] = useState(null);
+    const [newName, setNewName] = useState('');
 
     useEffect(() => {
         fetchUserInfo();
@@ -31,7 +33,7 @@ function UserDocuments({ token, userId }) {
     const fetchDocuments = async () => {
         try {
             setLoading(true);
-            const response = await fetch(`http://web-t3.rodrigoappelt.com:8080/api/Document/user/${userId}`, {
+            const response = await fetch(`http://web-t3.rodrigoappelt.com:8080/api/document/user/${userId}?limit=10&offset=0`, {
                 headers: { 'Authorization': 'Bearer ' + token }
             });
             
@@ -56,13 +58,17 @@ function UserDocuments({ token, userId }) {
         }
 
         try {
-            const response = await fetch(`http://web-t3.rodrigoappelt.com:8080/api/Document/${documentId}`, {
-                method: 'DELETE',
+            const response = await fetch(`http://web-t3.rodrigoappelt.com:8080/api/document/delete?documentId=${documentId}`, {
+                method: 'GET',
                 headers: { 'Authorization': 'Bearer ' + token }
             });
 
             if (response.ok) {
                 setDocuments(documents.filter(doc => doc.id !== documentId));
+            } else if (response.status === 404) {
+                alert('Documento não encontrado');
+            } else if (response.status === 401) {
+                alert('Não autorizado a excluir este documento');
             } else {
                 alert('Erro ao excluir documento');
             }
@@ -70,6 +76,52 @@ function UserDocuments({ token, userId }) {
             alert('Erro de conexão');
             console.error('Erro:', error);
         }
+    };
+
+    const handleRename = async (doc) => {
+        setRenamingDoc(doc);
+        setNewName(doc.title);
+    };
+
+    const submitRename = async () => {
+        if (!newName.trim()) {
+            alert('Nome não pode estar vazio');
+            return;
+        }
+
+        try {
+            const response = await fetch(`http://web-t3.rodrigoappelt.com:8080/api/document/rename?documentId=${renamingDoc.id}&newName=${encodeURIComponent(newName)}`, {
+                method: 'GET',
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+
+            if (response.ok) {
+                setDocuments(documents.map(doc => 
+                    doc.id === renamingDoc.id ? { ...doc, title: newName } : doc
+                ));
+                setRenamingDoc(null);
+                setNewName('');
+            } else {
+                alert('Erro ao renomear documento');
+            }
+        } catch (error) {
+            alert('Erro de conexão');
+            console.error('Erro:', error);
+        }
+    };
+
+    const handleEdit = async (doc) => {
+        // Pass the document to the parent component to open the editor
+        onEditDocument && onEditDocument({
+            id: doc.id,
+            title: doc.title,
+            sourceCode: doc.sourceCode,
+            language: doc.documentLanguage === 1 ? 'markdown' : 'latex'
+        });
+    };
+
+    const handleViewPDF = (docId) => {
+        window.open(`http://web-t3.rodrigoappelt.com:8080/api/document/${docId}/pdf`, '_blank');
     };
 
     const formatDate = (dateString) => {
@@ -84,6 +136,14 @@ function UserDocuments({ token, userId }) {
             });
         } catch {
             return 'Data inválida';
+        }
+    };
+
+    const getLanguageDisplay = (language) => {
+        switch (language) {
+            case 1: return { name: 'Markdown', class: 'markdown' };
+            case 2: return { name: 'LaTeX', class: 'latex' };
+            default: return { name: 'Desconhecido', class: 'unknown' };
         }
     };
 
@@ -148,11 +208,12 @@ function UserDocuments({ token, userId }) {
 
             <div className="documents-grid">
                 {documents.map(doc => {
+                    const languageInfo = getLanguageDisplay(doc.documentLanguage);
                     return (
                         <div key={doc.id} className="document-card">
                             <div className="document-header">
                                 <div className="document-info">
-                                    <h3>{doc.name}</h3>
+                                    <h3>{doc.title}</h3>
                                     <div className="document-meta">
                                         <div className="meta-item">
                                             <span className="meta-icon">👤</span>
@@ -160,71 +221,105 @@ function UserDocuments({ token, userId }) {
                                         </div>
                                         <div className="meta-item">
                                             <span className="meta-icon">📅</span>
-                                            <span>{formatDate(doc.created)}</span>
+                                            <span>{formatDate(doc.lastModificationTime)}</span>
                                         </div>
+                                        <div className="meta-item">
+                                            <span className="meta-icon">📝</span>
+                                            <span className={`document-type ${languageInfo.class}`}>
+                                                {languageInfo.name}
+                                            </span>
+                                        </div>
+                                        {doc.isPublic && (
+                                            <div className="meta-item">
+                                                <span className="meta-icon">🌍</span>
+                                                <span>Público</span>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             </div>
 
                             <div className="document-actions">
+                                <button
+                                    className="action-button primary"
+                                    onClick={() => handleViewPDF(doc.id)}
+                                >
+                                    <span>👁️</span>
+                                    Ver PDF
+                                </button>
                                 <a
                                     href={`http://web-t3.rodrigoappelt.com:8080/api/document/download/${doc.id}`}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="action-button primary"
+                                    className="action-button secondary"
                                 >
                                     <span>📥</span>
-                                    Download PDF
-                                </a>                                        <button
-                                            className="action-button secondary copy-btn"
-                                            data-doc-id={doc.id}
-                                            onClick={async () => {
-                                                const result = await copyShareLink(doc.id, token);
-                                                if (result.success) {
-                                                    // Criar toast de sucesso
-                                                    const toastElement = document.createElement('div');
-                                                    toastElement.className = 'custom-toast toast-success';
-                                                    toastElement.innerHTML = `
-                                                        <div class="toast-content">
-                                                            <div class="toast-icon">✅</div>
-                                                            <div class="toast-message">
-                                                                <strong>Link copiado com sucesso!</strong><br>
-                                                                <small>${result.url}</small>
-                                                            </div>
-                                                            <button class="toast-close" onclick="this.parentElement.parentElement.remove()">✕</button>
-                                                        </div>
-                                                    `;
-                                                    toastElement.style.cssText = `
-                                                        position: fixed;
-                                                        top: 20px;
-                                                        right: 20px;
-                                                        z-index: 9999;
-                                                        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-                                                        color: white;
-                                                        padding: 12px 16px;
-                                                        border-radius: 8px;
-                                                        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-                                                        max-width: 400px;
-                                                        animation: slideInRight 0.3s ease;
-                                                    `;
-                                                    
-                                                    document.body.appendChild(toastElement);
-                                                    
-                                                    // Remover após 4 segundos
+                                    Download
+                                </a>
+                                <button
+                                    className="action-button secondary copy-btn"
+                                    data-doc-id={doc.id}
+                                    onClick={async () => {
+                                        const result = await copyShareLink(doc.id, token);
+                                        if (result.success) {
+                                            // Criar toast de sucesso
+                                            const toastElement = document.createElement('div');
+                                            toastElement.className = 'custom-toast toast-success';
+                                            toastElement.innerHTML = `
+                                                <div class="toast-content">
+                                                    <div class="toast-icon">✅</div>
+                                                    <div class="toast-message">
+                                                        <strong>Link copiado com sucesso!</strong><br>
+                                                        <small>${result.url}</small>
+                                                    </div>
+                                                    <button class="toast-close" onclick="this.parentElement.parentElement.remove()">✕</button>
+                                                </div>
+                                            `;
+                                            toastElement.style.cssText = `
+                                                position: fixed;
+                                                top: 20px;
+                                                right: 20px;
+                                                z-index: 9999;
+                                                background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+                                                color: white;
+                                                padding: 12px 16px;
+                                                border-radius: 8px;
+                                                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+                                                max-width: 400px;
+                                                animation: slideInRight 0.3s ease;
+                                            `;
+                                            
+                                            document.body.appendChild(toastElement);
+                                            
+                                            // Remover após 4 segundos
+                                            setTimeout(() => {
+                                                if (toastElement.parentElement) {
+                                                    toastElement.style.animation = 'slideOutRight 0.3s ease';
                                                     setTimeout(() => {
-                                                        if (toastElement.parentElement) {
-                                                            toastElement.style.animation = 'slideOutRight 0.3s ease';
-                                                            setTimeout(() => {
-                                                                toastElement.remove();
-                                                            }, 300);
-                                                        }
-                                                    }, 4000);
+                                                        toastElement.remove();
+                                                    }, 300);
                                                 }
-                                            }}
-                                        >
-                                            <span>🔗</span>
-                                            Copiar Link
-                                        </button>
+                                            }, 4000);
+                                        }
+                                    }}
+                                >
+                                    <span>🔗</span>
+                                    Copiar Link
+                                </button>
+                                <button
+                                    className="action-button info"
+                                    onClick={() => handleEdit(doc)}
+                                >
+                                    <span>✏️</span>
+                                    Editar
+                                </button>
+                                <button
+                                    className="action-button warning"
+                                    onClick={() => handleRename(doc)}
+                                >
+                                    <span>🏷️</span>
+                                    Renomear
+                                </button>
                                 <button
                                     className="action-button danger"
                                     onClick={() => handleDelete(doc.id)}
@@ -237,6 +332,43 @@ function UserDocuments({ token, userId }) {
                     );
                 })}
             </div>
+
+            {/* Modal de Renomear */}
+            {renamingDoc && (
+                <div className="modal-overlay">
+                    <div className="modal-content">
+                        <h3 className="modal-title">Renomear Documento</h3>
+                        <div className="form-group">
+                            <label htmlFor="new-name">Novo nome:</label>
+                            <input
+                                id="new-name"
+                                type="text"
+                                className="form-control"
+                                value={newName}
+                                onChange={e => setNewName(e.target.value)}
+                                autoFocus
+                            />
+                        </div>
+                        <div className="modal-actions">
+                            <button 
+                                className="action-button secondary"
+                                onClick={() => {
+                                    setRenamingDoc(null);
+                                    setNewName('');
+                                }}
+                            >
+                                Cancelar
+                            </button>
+                            <button 
+                                className="action-button primary"
+                                onClick={submitRename}
+                            >
+                                Salvar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

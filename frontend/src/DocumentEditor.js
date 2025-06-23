@@ -1,13 +1,15 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import Editor from '@monaco-editor/react';
 import './DocumentEditor.css';
 
-function DocumentEditor({ token, onDocumentCreated }) {    const [name, setName] = useState('');
+function DocumentEditor({ token, onDocumentCreated, editingDocument, onDocumentSaved }) {
+    const [name, setName] = useState('');
     const [language, setLanguage] = useState('latex');
     const [content, setContent] = useState('');
     const [status, setStatus] = useState({ type: '', message: '' });
     const [isCompiling, setIsCompiling] = useState(false);
     const [activeToolbar, setActiveToolbar] = useState('latex');
+    const [isEditMode, setIsEditMode] = useState(false);
     const editorRef = useRef(null);
 
     const defaultLatexContent = `\\documentclass{article}
@@ -299,7 +301,29 @@ Conclusões finais...
         monaco.editor.setTheme('textogether-theme');
     };
 
+    // Load editing document when it changes
+    useEffect(() => {
+        if (editingDocument) {
+            setName(editingDocument.title);
+            setContent(editingDocument.sourceCode);
+            setLanguage(editingDocument.language);
+            setIsEditMode(true);
+            setStatus({ type: 'success', message: 'Documento carregado para edição!' });
+            setTimeout(() => setStatus({ type: '', message: '' }), 2000);
+        } else {
+            // Reset for new document
+            setIsEditMode(false);
+            setName('');
+            setContent('');
+            setStatus({ type: '', message: '' });
+        }
+    }, [editingDocument]);
+
     const handleLanguageChange = (newLanguage) => {
+        if (isEditMode) {
+            // Não permitir mudança de linguagem em modo de edição
+            return;
+        }
         setLanguage(newLanguage);
         if (newLanguage === 'latex' && !content) {
             setContent(defaultLatexContent);
@@ -309,6 +333,7 @@ Conclusões finais...
     };
 
     const handleNewDocument = () => {
+        setIsEditMode(false);
         setName('');
         setContent(language === 'latex' ? defaultLatexContent : defaultMarkdownContent);
         setStatus({ type: '', message: '' });
@@ -334,7 +359,7 @@ Conclusões finais...
         }
     };
 
-    const handleCompileAndSave = async () => {
+    const handleSave = async () => {
         if (!name.trim()) {
             setStatus({ type: 'error', message: 'Por favor, digite um nome para o documento.' });
             return;
@@ -346,54 +371,80 @@ Conclusões finais...
         }
 
         setIsCompiling(true);
-        setStatus({ type: 'loading', message: 'Compilando documento...' });
 
-        try {
-            // 1. Registrar metadados
-            const languageEnum = language === 'markdown' ? 1 : 2;
-            const registerResponse = await fetch('http://web-t3.rodrigoappelt.com:8080/api/Document/register', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': 'Bearer ' + token
-                },
-                body: JSON.stringify({ name, language: languageEnum })
-            });
+        if (isEditMode && editingDocument) {
+            // Update existing document
+            setStatus({ type: 'loading', message: 'Atualizando documento...' });
+            
+            try {
+                // Update source code
+                const updateResponse = await fetch(`http://web-t3.rodrigoappelt.com:8080/api/document/update?documentId=${editingDocument.id}`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer ' + token,
+                        'Content-Type': 'text/plain'
+                    },
+                    body: content
+                });
 
-            if (!registerResponse.ok) {
-                throw new Error('Erro ao registrar documento');
+                if (!updateResponse.ok) {
+                    throw new Error('Erro ao atualizar código fonte');
+                }
+
+                // Update name if changed
+                if (name !== editingDocument.title) {
+                    const renameResponse = await fetch(`http://web-t3.rodrigoappelt.com:8080/api/document/rename?documentId=${editingDocument.id}&newName=${encodeURIComponent(name)}`, {
+                        method: 'GET',
+                        headers: { 'Authorization': 'Bearer ' + token }
+                    });
+
+                    if (!renameResponse.ok) {
+                        throw new Error('Erro ao atualizar nome do documento');
+                    }
+                }
+
+                setStatus({ type: 'success', message: 'Documento atualizado com sucesso!' });
+                onDocumentSaved && onDocumentSaved();
+
+            } catch (error) {
+                console.error('Erro:', error);
+                setStatus({ type: 'error', message: error.message || 'Ocorreu um erro ao atualizar o documento' });
             }
+        } else {
+            // Create new document
+            setStatus({ type: 'loading', message: 'Compilando documento...' });
+            
+            try {
+                const languageEnum = language === 'markdown' ? 1 : 2;
+                
+                const response = await fetch('http://web-t3.rodrigoappelt.com:8080/api/document/new', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + token
+                    },
+                    body: JSON.stringify({ 
+                        name, 
+                        language: languageEnum,
+                        sourceCode: content,
+                        isPublic: true
+                    })
+                });
 
-            const { documentId } = await registerResponse.json();
-            setStatus({ type: 'loading', message: 'Enviando arquivo...' });
+                if (!response.ok) {
+                    throw new Error('Erro ao compilar documento');
+                }
 
-            // 2. Criar arquivo e enviar
-            const fileExtension = language === 'latex' ? '.tex' : '.md';
-            const blob = new Blob([content], { type: 'text/plain' });
-            const file = new File([blob], `${name}${fileExtension}`, { type: 'text/plain' });
+                setStatus({ type: 'success', message: 'Documento compilado e salvo com sucesso!' });
+                onDocumentCreated && onDocumentCreated();
 
-            const formData = new FormData();
-            formData.append('file', file);
-
-            const uploadResponse = await fetch(`http://web-t3.rodrigoappelt.com:8080/api/document/upload/${documentId}`, {
-                method: 'POST',
-                headers: { 'Authorization': 'Bearer ' + token },
-                body: formData
-            });
-
-            if (!uploadResponse.ok) {
-                throw new Error('Erro ao enviar arquivo');
+            } catch (error) {
+                console.error('Erro:', error);
+                setStatus({ type: 'error', message: error.message || 'Ocorreu um erro ao processar o documento' });
             }
-
-            setStatus({ type: 'success', message: 'Documento compilado e salvo com sucesso!' });
-            onDocumentCreated && onDocumentCreated();
-
-        } catch (error) {
-            console.error('Erro:', error);
-            setStatus({ type: 'error', message: error.message || 'Ocorreu um erro ao processar o documento' });
-        } finally {
-            setIsCompiling(false);
         }
+        
+        setIsCompiling(false);
     };
 
     return (
@@ -412,10 +463,16 @@ Conclusões finais...
                             className="language-selector"
                             value={language}
                             onChange={(e) => handleLanguageChange(e.target.value)}
+                            disabled={isEditMode}
                         >
                             <option value="latex">LaTeX (.tex)</option>
                             <option value="markdown">Markdown (.md)</option>
                         </select>
+                        {isEditMode && (
+                            <span className="edit-mode-indicator">
+                                ✏️ Editando
+                            </span>
+                        )}
                     </div>
                     <div className="editor-actions">
                         <button 
@@ -426,10 +483,13 @@ Conclusões finais...
                         </button>
                         <button 
                             className="compile-btn"
-                            onClick={handleCompileAndSave}
+                            onClick={handleSave}
                             disabled={isCompiling}
                         >
-                            {isCompiling ? 'Compilando...' : 'Compilar & Salvar'}
+                            {isCompiling ? 
+                                (isEditMode ? 'Atualizando...' : 'Compilando...') : 
+                                (isEditMode ? 'Salvar Alterações' : 'Compilar & Salvar')
+                            }
                         </button>
                     </div>
                 </div>
@@ -439,7 +499,9 @@ Conclusões finais...
                         {status.message}
                     </div>
                 )}
-            </div>            <div className="editor-container">
+            </div>
+
+            <div className="editor-container">
                 <div className="editor-toolbar">
                     <div className="toolbar-main">
                         {/* Ações principais */}
@@ -589,12 +651,14 @@ Conclusões finais...
                         language={language === 'latex' ? 'latex' : 'markdown'}
                         value={content}
                         onChange={(value) => setContent(value || '')}
-                        onMount={handleEditorDidMount}                        options={{
+                        onMount={handleEditorDidMount}
+                        options={{
                             minimap: { enabled: true },
                             fontSize: 16,
                             lineHeight: 24,
                             letterSpacing: 0.5,
                             lineNumbers: 'on',
+                            rulers: [80],
                             wordWrap: 'on',
                             automaticLayout: true,
                             scrollBeyondLastLine: false,
@@ -618,5 +682,7 @@ Conclusões finais...
         </div>
     );
 }
+
+
 
 export default DocumentEditor;

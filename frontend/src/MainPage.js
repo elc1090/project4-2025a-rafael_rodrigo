@@ -154,6 +154,7 @@ function MainPage({ onLogout }) {
     const [userName, setUserName] = useState('');
     const token = localStorage.getItem('token');
     const [currentView, setCurrentView] = useState('home');
+    const [editingDocument, setEditingDocument] = useState(null);
     const [refresh, setRefresh] = useState(0);
     const { addToast } = useToast();
 
@@ -174,6 +175,17 @@ function MainPage({ onLogout }) {
         });
     }, [token]);
 
+    const handleEditDocument = (document) => {
+        setEditingDocument(document);
+        setCurrentView('editor');
+    };
+
+    const handleDocumentSaved = () => {
+        setEditingDocument(null);
+        setRefresh(r => r + 1);
+        setCurrentView('my-docs');
+    };
+
     // Atualiza lista de documentos do usuário após upload
     const renderCurrentView = () => {
         switch(currentView) {
@@ -182,10 +194,12 @@ function MainPage({ onLogout }) {
                     <div className="content-area editor-view">
                         <DocumentEditor 
                             token={token} 
+                            editingDocument={editingDocument}
                             onDocumentCreated={() => {
                                 setRefresh(r => r + 1);
                                 setCurrentView('my-docs');
-                            }} 
+                            }}
+                            onDocumentSaved={handleDocumentSaved}
                         />
                     </div>
                 );
@@ -198,7 +212,7 @@ function MainPage({ onLogout }) {
                             <p>Envie seus arquivos LaTeX ou Markdown para compilação</p>
                         </div>
                         <div className="content-card">
-                            <NewDocumentForm 
+                            <UploadTab 
                                 token={token} 
                                 onDocumentCreated={() => {
                                     setRefresh(r => r + 1);
@@ -213,7 +227,12 @@ function MainPage({ onLogout }) {
                 return (
                     <div className="content-area">
                         <div className="content-card">
-                            <UserDocuments token={token} userId={userId} key={`user-${refresh}`} />
+                            <UserDocuments 
+                                token={token} 
+                                userId={userId} 
+                                onEditDocument={handleEditDocument}
+                                key={`user-${refresh}`} 
+                            />
                         </div>
                     </div>
                 );

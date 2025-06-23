@@ -6,58 +6,53 @@ function UploadTab({ token, onDocumentCreated }) {
     const [language, setLanguage] = useState('Markdown');
     const [file, setFile] = useState(null);
     const [fileName, setFileName] = useState('');
+    const [sourceCode, setSourceCode] = useState('');
+    const [isPublic, setIsPublic] = useState(true);
+    const [inputMethod, setInputMethod] = useState('file'); // 'file' ou 'text'
     const [status, setStatus] = useState({ type: '', message: '' });
 
-    const handleFileChange = (e) => {
+    const handleFileChange = async (e) => {
         const selectedFile = e.target.files[0];
         if (selectedFile) {
             setFile(selectedFile);
             setFileName(selectedFile.name);
+            
+            // Ler o conteúdo do arquivo
+            const text = await selectedFile.text();
+            setSourceCode(text);
         }
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setStatus({ type: 'loading', message: 'Registrando documento...' });
+        setStatus({ type: 'loading', message: 'Enviando documento...' });
         
         try {
             const languageEnum = language === 'Markdown' ? 1 : 2;
             
-            // 1. Registrar metadados
-            const res = await fetch('http://web-t3.rodrigoappelt.com:8080/api/Document/register', {
+            const response = await fetch('http://web-t3.rodrigoappelt.com:8080/api/document/new', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': 'Bearer ' + token
                 },
-                body: JSON.stringify({ name, language: languageEnum })
+                body: JSON.stringify({ 
+                    name, 
+                    language: languageEnum,
+                    sourceCode,
+                    isPublic
+                })
             });
             
-            if (!res.ok) {
-                throw new Error('Erro ao registrar documento');
-            }
-            
-            const { documentId } = await res.json();
-            setStatus({ type: 'loading', message: 'Enviando arquivo...' });
-            
-            // 2. Enviar arquivo
-            const formData = new FormData();
-            formData.append('file', file);
-            
-            const uploadRes = await fetch(`http://web-t3.rodrigoappelt.com:8080/api/document/upload/${documentId}`, {
-                method: 'POST',
-                headers: { 'Authorization': 'Bearer ' + token },
-                body: formData
-            });
-            
-            if (!uploadRes.ok) {
-                throw new Error('Erro ao enviar arquivo');
+            if (!response.ok) {
+                throw new Error('Erro ao enviar documento');
             }
             
             setStatus({ type: 'success', message: 'Documento enviado com sucesso!' });
             setName('');
             setFile(null);
             setFileName('');
+            setSourceCode('');
             onDocumentCreated && onDocumentCreated();
             
         } catch (error) {
@@ -112,24 +107,74 @@ function UploadTab({ token, onDocumentCreated }) {
                             <option value="Latex">LaTeX</option>
                         </select>
                     </div>
-                    
-                    <div className="form-group file-group">
-                        <label htmlFor="doc-file">Arquivo</label>
-                        <input
-                            id="doc-file"
-                            type="file"
-                            className="file-input"
-                            accept={language === 'Latex' ? '.tex' : '.md'}
-                            onChange={handleFileChange}
-                            required
-                        />
-                        <label htmlFor="doc-file" className="file-label">
-                            {fileName || `Clique para selecionar um arquivo .${language === 'Latex' ? 'tex' : 'md'}`}
+
+                    <div className="form-group">
+                        <label>Método de entrada</label>
+                        <div className="input-method-selector">
+                            <label className="radio-option">
+                                <input
+                                    type="radio"
+                                    value="file"
+                                    checked={inputMethod === 'file'}
+                                    onChange={e => setInputMethod(e.target.value)}
+                                />
+                                Upload de arquivo
+                            </label>
+                            <label className="radio-option">
+                                <input
+                                    type="radio"
+                                    value="text"
+                                    checked={inputMethod === 'text'}
+                                    onChange={e => setInputMethod(e.target.value)}
+                                />
+                                Entrada de texto
+                            </label>
+                        </div>
+                    </div>
+
+                    {inputMethod === 'file' ? (
+                        <div className="form-group file-group">
+                            <label htmlFor="doc-file">Arquivo</label>
+                            <input
+                                id="doc-file"
+                                type="file"
+                                className="file-input"
+                                accept={language === 'Latex' ? '.tex' : '.md'}
+                                onChange={handleFileChange}
+                                required
+                            />
+                            <label htmlFor="doc-file" className="file-label">
+                                {fileName || `Clique para selecionar um arquivo .${language === 'Latex' ? 'tex' : 'md'}`}
+                            </label>
+                            {fileName && <div className="file-name">{fileName}</div>}
+                        </div>
+                    ) : (
+                        <div className="form-group">
+                            <label htmlFor="source-code">Código fonte</label>
+                            <textarea
+                                id="source-code"
+                                className="form-control source-textarea"
+                                placeholder={`Digite seu código ${language} aqui...`}
+                                value={sourceCode}
+                                onChange={e => setSourceCode(e.target.value)}
+                                rows={10}
+                                required
+                            />
+                        </div>
+                    )}
+
+                    <div className="form-group">
+                        <label className="checkbox-option">
+                            <input
+                                type="checkbox"
+                                checked={isPublic}
+                                onChange={e => setIsPublic(e.target.checked)}
+                            />
+                            Tornar documento público (visível na comunidade)
                         </label>
-                        {fileName && <div className="file-name">{fileName}</div>}
                     </div>
                     
-                    <button type="submit" className="submit-btn" disabled={!file}>
+                    <button type="submit" className="submit-btn" disabled={!sourceCode.trim()}>
                         Enviar para compilação
                     </button>
                     
@@ -137,7 +182,8 @@ function UploadTab({ token, onDocumentCreated }) {
                         <div className={`status-message status-${status.type}`}>
                             {status.message}
                         </div>
-                    )}                </form>
+                    )}
+                </form>
             </section>
         </div>
     );
