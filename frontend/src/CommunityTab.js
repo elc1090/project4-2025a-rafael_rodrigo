@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './CommunityTab.css';
+import { copyShareLink } from './shareUtils';
 
 function CommunityTab({ token }) {
     const [documents, setDocuments] = useState([]);
@@ -22,26 +23,26 @@ function CommunityTab({ token }) {
             if (response.ok) {
                 const docs = await response.json();
                 console.log('Documentos recebidos:', docs);
-                const userIds = [...new Set(docs.map(doc => doc.userId))];
+                const owners = [...new Set(docs.map(doc => doc.owner))];
                 const namesObject = {};
-                await Promise.all(userIds.map(async (userId) => {
+                await Promise.all(owners.map(async (owner) => {
                     try {
-                        const userResponse = await fetch(`http://web-t3.rodrigoappelt.com:8080/api/User/${userId}`, {
+                        const userResponse = await fetch(`http://web-t3.rodrigoappelt.com:8080/api/User/${owner}`, {
                             headers: { 'Authorization': 'Bearer ' + token }
                         });
                         if (userResponse.ok) {
                             const userData = await userResponse.json();
-                            namesObject[userId] = userData.name;
+                            namesObject[owner] = userData.name;
                         } else {
-                            namesObject[userId] = 'Usuário Desconhecido';
+                            namesObject[owner] = 'Usuário Desconhecido';
                         }
                     } catch (error) {
-                        console.error(`Erro ao buscar usuário ${userId}:`, error);
-                        namesObject[userId] = 'Usuário Desconhecido';
+                        console.error(`Erro ao buscar usuário ${owner}:`, error);
+                        namesObject[owner] = 'Usuário Desconhecido';
                     }
                 }));
                 docs.forEach(doc => {
-                    doc.userName = namesObject[doc.userId];
+                    doc.userName = namesObject[doc.owner];
                 });
                 console.log('Documentos da comunidade carregados:', docs);
                 setDocuments(docs);
@@ -189,13 +190,91 @@ function CommunityTab({ token }) {
                                 </button>
                                 <button
                                     className="action-button secondary"
-                                    onClick={() => {
-                                        navigator.clipboard.writeText(`http://web-t3.rodrigoappelt.com:8080/api/document/download/${doc.id}`);
-                                        alert('Link copiado!');
+                                    onClick={async () => {
+                                        const result = await copyShareLink(doc.id, token);
+                                        if (result.success) {
+                                            // Criar toast de sucesso
+                                            const toastElement = document.createElement('div');
+                                            toastElement.className = 'custom-toast toast-success';
+                                            toastElement.innerHTML = `
+                                                <div class="toast-content">
+                                                    <div class="toast-icon">✅</div>
+                                                    <div class="toast-message">
+                                                        <strong>Link compartilhado criado!</strong><br>
+                                                        <small>Código: ${result.shortname}</small><br>
+                                                        <small style="word-break: break-all;">${result.url}</small>
+                                                    </div>
+                                                    <button class="toast-close" onclick="this.parentElement.parentElement.remove()">✕</button>
+                                                </div>
+                                            `;
+                                            toastElement.style.cssText = `
+                                                position: fixed;
+                                                top: 20px;
+                                                right: 20px;
+                                                z-index: 9999;
+                                                background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+                                                color: white;
+                                                padding: 12px 16px;
+                                                border-radius: 8px;
+                                                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+                                                max-width: 400px;
+                                                animation: slideInRight 0.3s ease;
+                                            `;
+                                            
+                                            document.body.appendChild(toastElement);
+                                            
+                                            // Remover após 5 segundos
+                                            setTimeout(() => {
+                                                if (toastElement.parentElement) {
+                                                    toastElement.style.animation = 'slideOutRight 0.3s ease';
+                                                    setTimeout(() => {
+                                                        toastElement.remove();
+                                                    }, 300);
+                                                }
+                                            }, 5000);
+                                        } else {
+                                            // Criar toast de erro
+                                            const errorToast = document.createElement('div');
+                                            errorToast.className = 'custom-toast toast-error';
+                                            errorToast.innerHTML = `
+                                                <div class="toast-content">
+                                                    <div class="toast-icon">❌</div>
+                                                    <div class="toast-message">
+                                                        <strong>Erro ao compartilhar</strong><br>
+                                                        <small>${result.error}</small>
+                                                    </div>
+                                                    <button class="toast-close" onclick="this.parentElement.parentElement.remove()">✕</button>
+                                                </div>
+                                            `;
+                                            errorToast.style.cssText = `
+                                                position: fixed;
+                                                top: 20px;
+                                                right: 20px;
+                                                z-index: 9999;
+                                                background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+                                                color: white;
+                                                padding: 12px 16px;
+                                                border-radius: 8px;
+                                                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+                                                max-width: 400px;
+                                                animation: slideInRight 0.3s ease;
+                                            `;
+                                            
+                                            document.body.appendChild(errorToast);
+                                            
+                                            setTimeout(() => {
+                                                if (errorToast.parentElement) {
+                                                    errorToast.style.animation = 'slideOutRight 0.3s ease';
+                                                    setTimeout(() => {
+                                                        errorToast.remove();
+                                                    }, 300);
+                                                }
+                                            }, 4000);
+                                        }
                                     }}
                                 >
                                     <span>🔗</span>
-                                    Copiar Link
+                                    Copiar link
                                 </button>
                             </div>
                         </div>

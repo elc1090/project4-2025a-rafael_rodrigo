@@ -9,6 +9,9 @@ function UserDocuments({ token, userId, onEditDocument }) {
     const [userName, setUserName] = useState('');
     const [renamingDoc, setRenamingDoc] = useState(null);
     const [newName, setNewName] = useState('');
+    const [aiSummaryDoc, setAiSummaryDoc] = useState(null);
+    const [aiSummary, setAiSummary] = useState('');
+    const [isLoadingSummary, setIsLoadingSummary] = useState(false);
 
     useEffect(() => {
         fetchUserInfo();
@@ -147,6 +150,44 @@ function UserDocuments({ token, userId, onEditDocument }) {
         }
     };
 
+    const handleAiSummarize = async (doc) => {
+        setAiSummaryDoc(doc);
+        setIsLoadingSummary(true);
+        setAiSummary('');
+        
+        try {
+            const response = await fetch(`http://web-t3.rodrigoappelt.com:8080/api/ai/summarize?documentId=${doc.id}`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': 'Bearer ' + token
+                }
+            });
+            console.log('Chamando API de IA para resumo:', response);
+            if (response.ok) {
+                const summaryData = await response.text();
+                console.log('Resposta da IA:', summaryData);
+                setAiSummary(summaryData);
+            } else if (response.status === 400) {
+                setAiSummary('Erro: Documento não encontrado ou inválido');
+            } else if (response.status === 500) {
+                setAiSummary('Erro: Falha no servidor de IA. Tente novamente mais tarde.');
+            } else {
+                setAiSummary('Erro: Não foi possível gerar o resumo');
+            }
+        } catch (error) {
+            console.error('Erro na API de IA:', error);
+            setAiSummary('Erro de conexão: ' + error.message);
+        } finally {
+            setIsLoadingSummary(false);
+        }
+    };
+
+    const closeAiModal = () => {
+        setAiSummaryDoc(null);
+        setAiSummary('');
+        setIsLoadingSummary(false);
+    };
+
     if (loading) {
         return (
             <div className="user-documents">
@@ -257,6 +298,14 @@ function UserDocuments({ token, userId, onEditDocument }) {
                                     Download
                                 </a>
                                 <button
+                                    className="action-button info"
+                                    onClick={() => handleAiSummarize(doc)}
+                                    title="Gerar resumo com IA"
+                                >
+                                    <span>🤖</span>
+                                    Resumir IA
+                                </button>
+                                <button
                                     className="action-button secondary copy-btn"
                                     data-doc-id={doc.id}
                                     onClick={async () => {
@@ -269,8 +318,9 @@ function UserDocuments({ token, userId, onEditDocument }) {
                                                 <div class="toast-content">
                                                     <div class="toast-icon">✅</div>
                                                     <div class="toast-message">
-                                                        <strong>Link copiado com sucesso!</strong><br>
-                                                        <small>${result.url}</small>
+                                                        <strong>Link compartilhado criado!</strong><br>
+                                                        <small>Código: ${result.shortname}</small><br>
+                                                        <small style="word-break: break-all;">${result.url}</small>
                                                     </div>
                                                     <button class="toast-close" onclick="this.parentElement.parentElement.remove()">✕</button>
                                                 </div>
@@ -291,7 +341,7 @@ function UserDocuments({ token, userId, onEditDocument }) {
                                             
                                             document.body.appendChild(toastElement);
                                             
-                                            // Remover após 4 segundos
+                                            // Remover após 5 segundos
                                             setTimeout(() => {
                                                 if (toastElement.parentElement) {
                                                     toastElement.style.animation = 'slideOutRight 0.3s ease';
@@ -299,12 +349,50 @@ function UserDocuments({ token, userId, onEditDocument }) {
                                                         toastElement.remove();
                                                     }, 300);
                                                 }
+                                            }, 5000);
+                                        } else {
+                                            // Criar toast de erro
+                                            const errorToast = document.createElement('div');
+                                            errorToast.className = 'custom-toast toast-error';
+                                            errorToast.innerHTML = `
+                                                <div class="toast-content">
+                                                    <div class="toast-icon">❌</div>
+                                                    <div class="toast-message">
+                                                        <strong>Erro ao compartilhar</strong><br>
+                                                        <small>${result.error}</small>
+                                                    </div>
+                                                    <button class="toast-close" onclick="this.parentElement.parentElement.remove()">✕</button>
+                                                </div>
+                                            `;
+                                            errorToast.style.cssText = `
+                                                position: fixed;
+                                                top: 20px;
+                                                right: 20px;
+                                                z-index: 9999;
+                                                background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+                                                color: white;
+                                                padding: 12px 16px;
+                                                border-radius: 8px;
+                                                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+                                                max-width: 400px;
+                                                animation: slideInRight 0.3s ease;
+                                            `;
+                                            
+                                            document.body.appendChild(errorToast);
+                                            
+                                            setTimeout(() => {
+                                                if (errorToast.parentElement) {
+                                                    errorToast.style.animation = 'slideOutRight 0.3s ease';
+                                                    setTimeout(() => {
+                                                        errorToast.remove();
+                                                    }, 300);
+                                                }
                                             }, 4000);
                                         }
                                     }}
                                 >
                                     <span>🔗</span>
-                                    Copiar Link
+                                    Copiar link
                                 </button>
                                 <button
                                     className="action-button info"
@@ -365,6 +453,90 @@ function UserDocuments({ token, userId, onEditDocument }) {
                             >
                                 Salvar
                             </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal de Resumo IA */}
+            {aiSummaryDoc && (
+                <div className="modal-overlay">
+                    <div className="modal-content modal-large">
+                        <h3 className="modal-title">
+                            🤖 Resumo IA: {aiSummaryDoc.title}
+                        </h3>
+                        
+                        <div className="ai-summary-content">
+                            {isLoadingSummary ? (
+                                <div className="ai-loading">
+                                    <div className="ai-spinner"></div>
+                                    <p>Gerando resumo com IA...</p>
+                                    <small>Isso pode levar alguns segundos</small>
+                                </div>
+                            ) : aiSummary ? (
+                                <div className="ai-summary-result">
+                                    <div className="ai-summary-header">
+                                        <h4>📄 Resumo do Documento</h4>
+                                        <button 
+                                            className="copy-summary-btn"
+                                            onClick={() => {
+                                                navigator.clipboard.writeText(aiSummary);
+                                                // Toast notification
+                                                const toast = document.createElement('div');
+                                                toast.className = 'custom-toast toast-success';
+                                                toast.innerHTML = `
+                                                    <div class="toast-content">
+                                                        <div class="toast-icon">✅</div>
+                                                        <div class="toast-message">
+                                                            <strong>Resumo copiado!</strong>
+                                                        </div>
+                                                    </div>
+                                                `;
+                                                toast.style.cssText = `
+                                                    position: fixed;
+                                                    top: 20px;
+                                                    right: 20px;
+                                                    z-index: 10000;
+                                                    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+                                                    color: white;
+                                                    padding: 12px 16px;
+                                                    border-radius: 8px;
+                                                    animation: slideInRight 0.3s ease;
+                                                `;
+                                                document.body.appendChild(toast);
+                                                setTimeout(() => toast.remove(), 2000);
+                                            }}
+                                            title="Copiar resumo"
+                                        >
+                                            📋 Copiar
+                                        </button>
+                                    </div>
+                                    <div className="ai-summary-text">
+                                        <pre>{aiSummary}</pre>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="ai-empty">
+                                    <p>Clique em "Gerar Novamente" para criar um resumo.</p>
+                                </div>
+                            )}
+                        </div>
+                        
+                        <div className="modal-actions">
+                            <button 
+                                className="action-button secondary"
+                                onClick={closeAiModal}
+                            >
+                                Fechar
+                            </button>
+                            {!isLoadingSummary && (
+                                <button 
+                                    className="action-button primary"
+                                    onClick={() => handleAiSummarize(aiSummaryDoc)}
+                                >
+                                    🔄 Gerar Novamente
+                                </button>
+                            )}
                         </div>
                     </div>
                 </div>

@@ -28,7 +28,7 @@ export const createShareLink = async (documentId, token) => {
         };
     }
 };
-
+/*
 // Função para copiar link com toast notification
 export const copyShareLink = async (documentId, token, showToast = null) => {
     const result = await createShareLink(documentId, token);
@@ -79,10 +79,40 @@ export const copyShareLink = async (documentId, token, showToast = null) => {
         }
         return { success: false, error: result.error };
     }
-};
+};*/
 
 // Função para redirecionar para link compartilhado
 export const openShareLink = (shortname) => {
     const shareUrl = `http://web-t3.rodrigoappelt.com:8080/api/share/${shortname}`;
     window.open(shareUrl, '_blank');
+};
+
+export const copyShareLink = async (documentId, token) => {
+    try {
+        const response = await fetch(`http://web-t3.rodrigoappelt.com:8080/api/share/create?documentId=${documentId}&useLatest=true`, {
+            method: 'POST',
+            headers: { 'Authorization': 'Bearer ' + token }
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            // Copy the short URL to clipboard
+            await navigator.clipboard.writeText(data.shortUrl);
+            return { 
+                success: true, 
+                url: data.shortUrl,
+                pdfUrl: data.pdfUrl,
+                shortname: data.shortname
+            };
+        } else if (response.status === 404) {
+            return { success: false, error: 'Documento não encontrado' };
+        } else if (response.status === 400) {
+            return { success: false, error: 'Requisição inválida' };
+        } else {
+            return { success: false, error: 'Erro ao criar link compartilhado' };
+        }
+    } catch (error) {
+        console.error('Erro ao criar link compartilhado:', error);
+        return { success: false, error: 'Erro de conexão' };
+    }
 };
