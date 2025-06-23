@@ -66,8 +66,8 @@ namespace backend.Services
                     logger.LogInformation("Requisicao para Gemini feita com sucesso. Chave {i} utilizada", i);
                 }
                 using JsonDocument jsonDoc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
-                logger.LogInformation("Resposta da Gemini: {Response}", jsonDoc.RootElement.ToString());
                 string summary = jsonDoc.RootElement.GetProperty("candidates")![0].GetProperty("parts")![0].GetProperty("text")!.GetString()!;
+                logger.LogInformation("Resposta do Gemini: {Response}", summary);
                 return summary;
             }
 
