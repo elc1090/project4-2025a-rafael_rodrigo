@@ -15,12 +15,13 @@ function CommunityTab({ token }) {
             setLoading(true);
             setError('');
             
-            const response = await fetch('http://web-t3.rodrigoappelt.com:8080/api/document/dashboard', {
+            const response = await fetch('http://web-t3.rodrigoappelt.com:8080/api/document/dashboard?limit=10&offset=0', {
                 headers: { 'Authorization': 'Bearer ' + token }
             });
             
             if (response.ok) {
                 const docs = await response.json();
+                console.log('Documentos recebidos:', docs);
                 const userIds = [...new Set(docs.map(doc => doc.userId))];
                 const namesObject = {};
                 await Promise.all(userIds.map(async (userId) => {
@@ -147,24 +148,33 @@ function CommunityTab({ token }) {
 
             <div className="community-grid">
                 {documents.map(doc => {
+                    const languageInfo = getLanguageDisplay(doc.documentLanguage);
                     return (
                         <div key={doc.id} className="community-card">
                             <div className="community-card-header">
                                 <div className="document-info">
-                                    <h3>{doc.name}</h3>
+                                    <h3>{doc.title}</h3>
                                     <div className="document-meta">
                                         <div className="meta-item">
                                             <span className="meta-icon">👤</span>
-                                            <span>{doc.userName}</span>
+                                            <span>{doc.userName || 'Usuário Desconhecido'}</span>
                                         </div>
                                         <div className="meta-item">
                                             <span className="meta-icon">📅</span>
-                                            <span>Criado em {formatDate(doc.created)}</span>
+                                            <span>{formatDate(doc.lastModificationTime)}</span>
                                         </div>
                                         <div className="meta-item">
-                                            <span className="meta-icon">🌍</span>
-                                            <span>Público</span>
+                                            <span className="meta-icon">📝</span>
+                                            <span className={`document-type ${languageInfo.class}`}>
+                                                {languageInfo.name}
+                                            </span>
                                         </div>
+                                        {doc.isPublic && (
+                                            <div className="meta-item">
+                                                <span className="meta-icon">🌍</span>
+                                                <span>Público</span>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             </div>
