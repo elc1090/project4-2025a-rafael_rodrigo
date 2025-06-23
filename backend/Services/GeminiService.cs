@@ -1,5 +1,6 @@
 ﻿using System.Net.Http.Headers;
 using System.Net.Mime;
+using System.Text.Json;
 using System.Transactions;
 using static System.Net.WebRequestMethods;
 
@@ -59,8 +60,10 @@ namespace backend.Services
                     logger.LogError("StatusCode: {Code}; Reason: {Reason}; Content: {Content}", response.StatusCode, response.ReasonPhrase, await response.Content.ReadAsStringAsync());
                     continue;
                 }
-                var responseContent = await response.Content.ReadAsStringAsync();
-                return responseContent;
+                using var responseStream = await response.Content.ReadAsStreamAsync();
+                using JsonDocument jsonDoc = await JsonDocument.ParseAsync(responseStream);
+                string summary = jsonDoc.RootElement.GetProperty("candidates")![0].GetProperty("parts")![0].GetProperty("text")!.GetString()!;
+                return summary;
             }
 
             // se chegou aqui eh porque todas as chaves falharam
