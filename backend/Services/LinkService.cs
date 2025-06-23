@@ -11,7 +11,7 @@ public class LinkService
         this.userService = userService;
     }
 
-    public Guid Resolve(string shortname)
+    public (Guid documentId, string version) Resolve(string shortname)
     {
         var coll = userService.Database.GetCollection<DocumentLink>();
         coll.EnsureIndex(x => x.ShortLink);
@@ -19,13 +19,18 @@ public class LinkService
             .Where(x => x.ShortLink == shortname)
             .FirstOrDefault();
         if (link is null) { 
-            return Guid.Empty;
+            return (documentId: Guid.Empty, version: "");
         }
 
-        return link.DocumentId;
+        var doc = userService.Database.GetCollection<Document>()
+            .Query()
+            .Where(x => x.Id == link.DocumentId)
+            .FirstOrDefault();
+
+        return (link.DocumentId, link.UseLatest ? doc.CurrentVersion : link.DocumentVersion!);
     }
 
-    public string CreateLink(Guid documentId)
+    public string CreateLink(Guid documentId, bool useLatest)
     {
         var coll = userService.Database.GetCollection<DocumentLink>();
         coll.EnsureIndex(x => x.ShortLink);
@@ -36,13 +41,30 @@ public class LinkService
         {
             shortLink = GenerateShortLink();
         } while (coll.Exists(x => x.ShortLink == shortLink));
+
+        var docCol = userService.Database.GetCollection<Document>();
+        var doc = docCol.Query()
+            .Where(x => x.Id == documentId)
+            .FirstOrDefault();
+        string version = doc?.CurrentVersion ?? string.Empty;
+
         DocumentLink link = new()
         {
+            Id = Guid.NewGuid(),
             DocumentId = documentId,
-            ShortLink = shortLink
+            ShortLink = shortLink,
+            UseLatest = useLatest,
+            DocumentVersion = useLatest ? null : version
         };
         coll.Insert(link);
         return shortLink;
+    }
+
+    public void DeleteLinks(Guid documentId)
+    {
+        var coll = userService.Database.GetCollection<DocumentLink>();
+        coll.EnsureIndex(x => x.DocumentId);
+        coll.DeleteMany(x => x.DocumentId == documentId);
     }
 
     private static string GenerateShortLink()

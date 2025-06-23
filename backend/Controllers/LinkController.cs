@@ -10,11 +10,15 @@ public class LinkController : ControllerBase
 {
     private ILogger<LinkController> logger;
     private LinkService linkService;
+    private RendererService renderer;
+    private DocumentService documentService;
 
-    public LinkController(ILogger<LinkController> logger, LinkService linkService)
+    public LinkController(ILogger<LinkController> logger, LinkService linkService, RendererService renderer, DocumentService documentService)
     {
         this.logger = logger;
         this.linkService = linkService;
+        this.renderer = renderer;
+        this.documentService = documentService;
     }
 
     [HttpGet("{shortname}")]
@@ -25,7 +29,7 @@ public class LinkController : ControllerBase
             logger.LogWarning("Received empty or null shortname.");
             return BadRequest("Shortname cannot be empty.");
         }
-        var documentId = linkService.Resolve(shortname);
+        (Guid documentId, string version) = linkService.Resolve(shortname);
         if (documentId == Guid.Empty)
         {
             logger.LogInformation("Link not found for shortname: {Shortname}", shortname);
@@ -38,7 +42,7 @@ public class LinkController : ControllerBase
 
     [HttpPost("create")]
     [Authenticated]
-    public IActionResult CreateLink(Guid documentId)
+    public async Task<IActionResult> CreateLink(Guid documentId, bool useLatest)
     {
         if (documentId == Guid.Empty)
         {
@@ -46,17 +50,32 @@ public class LinkController : ControllerBase
             return BadRequest("Document ID cannot be empty.");
         }
 
-        var link = linkService.CreateLink(documentId);
+        var doc = documentService.GetDocument(documentId);
+        if (doc is null)
+        {
+            logger.LogWarning("Document not found for ID: {DocumentId}", documentId);
+            return NotFound("Document not found.");
+        }
+
+        if (!useLatest)
+        {
+            // garante que exista um rendered document
+            await renderer.RenderAsync(doc);
+        }
+
+        var link = linkService.CreateLink(documentId, useLatest);
         if (link is null)
         {
             logger.LogError("Failed to create link for document ID: {DocumentId}", documentId);
             return StatusCode(500, "Failed to create link.");
         }
         logger.LogInformation("Created link with shortname: {ShortLink} for document ID: {DocumentId}", link, documentId);
-        string url = $"http://web-t3.rodrigoappelt.com:8080/api/document/{documentId}";
+        string pdfUrl = $"http://web-t3.rodrigoappelt.com:8080/api/document/{documentId}";
+        string shortUrl = $"http://web-t3.rodrigoappelt.com:8080/api/share/{link}";
         return Ok(new { 
             shortname = link,
-            url
+            pdfUrl,
+            shortUrl
         });
     }
 }

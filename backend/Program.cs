@@ -46,4 +46,6 @@ static void ConfigureServices(IServiceCollection services)
     services.AddSingleton(http);
     services.AddSingleton<GithubService>();
     services.AddSingleton<LinkService>();
+    services.AddSingleton<RendererService>();
+    services.AddSingleton<GeminiService>();
 }

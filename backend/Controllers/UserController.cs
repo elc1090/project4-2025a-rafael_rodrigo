@@ -73,7 +73,7 @@ public class UserController : ControllerBase {
     [Authenticated]
     [HttpPost("changepassword")]
     public IActionResult ChangePassword([FromBody]string newpassword) {
-        Guid userId = (Guid)HttpContext.Items["UserId"];
+        Guid userId = HttpContext.GetLoggedUser();
 
         db.SetUserPassword(userId, newpassword);
         return Ok("Senha alterada com sucesso");
@@ -105,17 +105,14 @@ public class UserController : ControllerBase {
     [Authenticated]
     [HttpGet("me")]
     public IActionResult GetCurrentUser() {
-        Guid userId = (Guid)HttpContext.Items["UserId"];
+        Guid userId = HttpContext.GetLoggedUser();
 
         var user = db.GetUser(userId);
         if(user == null) {
             return NotFound();
         }
 
-        return Ok(new {
-            user.Id,
-            user.Name,
-        });
+        return Ok(user);
     }
 
     /// <summary>
@@ -131,8 +128,9 @@ public class UserController : ControllerBase {
         }
         return Ok(new {
             user.Id,
+            user.UserType,
+            AvatarUrl = user.GithubAvatarUrl,
             user.Name,
-            info = "nao retorna datas pois seria violacao de seguranca"
         });
     }
 }
