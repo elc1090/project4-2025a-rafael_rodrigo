@@ -27,6 +27,10 @@ namespace backend.Services
                 return "Erro na requisicao para gemini API.";
             }
 
+            string sanitized = input.Trim().Replace("\n","\\n").Replace("\r","\\r").Replace("\"", "\\\"").Replace("\\","\\\\");
+
+
+
             for (int i = 0; i < keys.Count; i++) {
                 string key = keys[i];
                 string url = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={key}";
@@ -39,7 +43,7 @@ namespace backend.Services
                                 {
                                     "parts": [
                                         {
-                                            "text": "Resuma o seguinte texto de forma breve e objetiva:\n{{input.Replace("\"", "\\\"").Replace("\n", "\\n")}}"
+                                            "text": "Resuma o seguinte texto de forma breve e objetiva:\n{{sanitized}}"
                                         }
                                     ]
                                 }
