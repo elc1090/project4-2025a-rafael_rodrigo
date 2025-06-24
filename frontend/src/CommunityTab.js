@@ -27,7 +27,7 @@ function CommunityTab({ token }) {
                 const namesObject = {};
                 await Promise.all(owners.map(async (owner) => {
                     try {
-                        const userResponse = await fetch(`http://web-t3.rodrigoappelt.com:8080/api/User/${owner}`, {
+                        const userResponse = await fetch(`http://web-t3.rodrigoappelt.com:8080/api/user/${owner}`, {
                             headers: { 'Authorization': 'Bearer ' + token }
                         });
                         if (userResponse.ok) {

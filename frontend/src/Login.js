@@ -42,9 +42,9 @@ function Login({ onLogin, onShowRegister }) {
                 console.log('Nova conta criada para:', data.name);
             }
             
-            // Call onLogin to trigger navigation to main page
+            // Call onLogin with the token to trigger navigation to main page
             if (onLogin) {
-                onLogin();
+                onLogin(data.authToken);
             }
             
         } catch (error) {

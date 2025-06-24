@@ -40,8 +40,11 @@ function App() {
     }, []);
 
     const handleLogin = (newToken) => {
-        localStorage.setItem('token', newToken);
-        setToken(newToken);
+        console.log('Login successful, setting token:', newToken);
+        if (newToken) {
+            localStorage.setItem('token', newToken);
+            setToken(newToken);
+        }
         setIsAuthenticated(true);
         setShowRegister(false);
     };

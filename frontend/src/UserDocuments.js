@@ -20,7 +20,7 @@ function UserDocuments({ token, userId, onEditDocument }) {
 
     const fetchUserInfo = async () => {
         try {
-            const response = await fetch('http://web-t3.rodrigoappelt.com:8080/api/User/me', {
+            const response = await fetch('http://web-t3.rodrigoappelt.com:8080/api/user/me', {
                 headers: { 'Authorization': 'Bearer ' + token }
             });
             
