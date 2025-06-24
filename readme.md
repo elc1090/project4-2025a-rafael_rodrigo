@@ -1,6 +1,6 @@
 # Projeto: TeXTogether
 
-![print do projeto](texTogether.png)
+![print do projeto](textTogether.png)
 
 Acesso: [http://web-t3.rodrigoappelt.com:8080](http://web-t3.rodrigoappelt.com:8080)
 
@@ -11,7 +11,7 @@ Rafael Carneiro Pregardier e Rodrigo Appelt
 ## Nosso produto
 
 O nosso produto é uma plataforma integradora com o objetivo de compartilhar conhecimento entre vários usuários de forma fácil. A partir de uma entrada em LaTeX ou Markdown, o servidor automaticamente compila o código para PDF e 
-compartilha na rede para todos os outros usuários verem.
+compartilha na rede para todos os outros usuários verem. Esse projeto é uma continuação do terceiro projeto, com a adição de novas características como: editor de texto, login com GitHub, resumo com IA e compartilhamento de PDFs com usuários que não tem login na plataforma.
 
 > **Nota:** o uso de arquivos mardown (.md) está suspenso atualmente devido a um bug no serviço de compilação. Como não há tempo para a troca de contexto e recriação das imagens no docker, essa funcionalidade foi cortada _temporariamente_.
 
@@ -26,14 +26,13 @@ rodando Linux OpenSUSE Leap e utilizando **Docker** para as imagens dos serviço
 o frontend e o backend.
 
 Para o frontend, foi escolhido as mesmas tecnologias do segundo projeto, elas sendo o React, a partir do Create React App, Node.Js para rodar o servidor localmente, Html para a construção dos componentes
-e css puro para a estilização. O deploy do frontend foi feito na Vercel, também seguindo na linha do segundo projeto.
+e css puro para a estilização. O deploy do frontend junto ao Docker, também seguindo na linha do terceiro projeto.
 
 ## Tecnologias
 
 * Frontend
   * Create React App
   * Node.js
-  * Vercel
   * React
   * Html
   * Css
