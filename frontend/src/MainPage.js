@@ -159,20 +159,48 @@ function MainPage({ onLogout }) {
     const { addToast } = useToast();
 
     useEffect(() => {
-        // Busca dados do usuário autenticado
+        // Get username from localStorage first (from login response)
+        const storedUserName = localStorage.getItem('userName');
+        if (storedUserName) {
+            setUserName(storedUserName);
+        }
+
+        // Busca dados do usuário autenticado para obter o ID
         if (!token) return;
-        fetch('http://web-t3.rodrigoappelt.com:8080/api/user/me', {
-            headers: {
-                'Authorization': 'Bearer ' + token
+        
+        const fetchUserData = async () => {
+            try {
+                const response = await fetch('http://web-t3.rodrigoappelt.com:8080/api/user/me', {
+                    headers: {
+                        'Authorization': 'Bearer ' + token
+                    }
+                });
+                
+                if (response.ok) {
+                    const userData = await response.json();
+                    console.log('Dados do usuário:', userData);
+                    setUserId(userData.id);
+                    
+                    // Update username if not already set or if different
+                    if (!storedUserName || storedUserName !== userData.name) {
+                        setUserName(userData.name || userData.githubName || 'Usuário');
+                        localStorage.setItem('userName', userData.name || userData.githubName || 'Usuário');
+                    }
+                } else {
+                    console.error('Erro ao buscar dados do usuário');
+                    if (!storedUserName) {
+                        setUserName('Usuário');
+                    }
+                }
+            } catch (error) {
+                console.error('Erro ao conectar com a API:', error);
+                if (!storedUserName) {
+                    setUserName('Usuário');
+                }
             }
-        })
-        .then(res => res.ok ? res.json() : null)
-        .then(data => {
-            if (data) {
-                setUserId(data.id);
-                setUserName(data.name);
-            }
-        });
+        };
+
+        fetchUserData();
     }, [token]);
 
     const handleEditDocument = (document) => {

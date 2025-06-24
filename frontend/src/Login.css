@@ -78,14 +78,40 @@
     background: #3d8b99;
 }
 
+.login-btn.loading {
+    background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
+    cursor: not-allowed;
+    position: relative;
+}
+
+.login-btn.loading::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 20px;
+    height: 20px;
+    border: 2px solid transparent;
+    border-top: 2px solid white;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: translate(-50%, -50%) rotate(0deg); }
+    100% { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
 .error-message {
-    color: #e74c3c;
-    background-color: #f8d7da;
-    padding: 10px 15px;
+    background: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
     border-radius: 6px;
-    text-align: center;
+    padding: 12px;
+    margin-top: 15px;
     font-size: 0.9rem;
-    margin-top: 10px;
+    text-align: center;
 }
 
 .login-footer {
@@ -103,30 +129,6 @@
 
 .login-footer a:hover {
     text-decoration: underline;
-}
-
-/* Efeito de loading no botão */
-.login-btn.loading {
-    position: relative;
-    color: transparent;
-}
-
-.login-btn.loading::after {
-    content: "";
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 20px;
-    height: 20px;
-    border: 3px solid rgba(255,255,255,0.3);
-    border-radius: 50%;
-    border-top-color: white;
-    animation: spin 1s ease-in-out infinite;
-}
-
-@keyframes spin {
-    to { transform: translate(-50%, -50%) rotate(360deg); }
 }
 
 .login-divider {

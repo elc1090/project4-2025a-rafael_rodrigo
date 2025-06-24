@@ -15,22 +15,40 @@ function Login({ onLogin, onShowRegister }) {
         
         try {
             const response = await fetch(
-                `http://web-t3.rodrigoappelt.com:8080/api/User/login?username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`,
+                `http://web-t3.rodrigoappelt.com:8080/api/user/login?username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`,
                 {
                     method: 'GET',
                     headers: { 'Content-Type': 'application/json' }
                 }
             );
             
-            if (!response.ok) {
+            if (response.status === 401) {
                 throw new Error('Usuário ou senha inválidos.');
             }
             
+            if (!response.ok) {
+                throw new Error('Erro no servidor. Tente novamente.');
+            }
+            
             const data = await response.json();
+            console.log('Login response:', data);
+            
+            // Store the token and username
             localStorage.setItem('token', data.authToken);
-            if (onLogin) onLogin();
+            localStorage.setItem('userName', data.name);
+            
+            // Show welcome message for new accounts
+            if (data.newAccount) {
+                console.log('Nova conta criada para:', data.name);
+            }
+            
+            // Call onLogin to trigger navigation to main page
+            if (onLogin) {
+                onLogin();
+            }
             
         } catch (error) {
+            console.error('Login error:', error);
             setError(error.message || 'Erro ao conectar ao servidor.');
         } finally {
             setLoading(false);
