@@ -289,7 +289,7 @@ function UserDocuments({ token, userId, onEditDocument }) {
                                     Ver PDF
                                 </button>
                                 <a
-                                    href={`http://web-t3.rodrigoappelt.com:8080/api/document/download/${doc.id}`}
+                                    href={`http://web-t3.rodrigoappelt.com:8080/api/document/${doc.id}/pdf`}
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="action-button secondary"

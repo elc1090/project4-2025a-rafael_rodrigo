@@ -28,58 +28,6 @@ export const createShareLink = async (documentId, token) => {
         };
     }
 };
-/*
-// Função para copiar link com toast notification
-export const copyShareLink = async (documentId, token, showToast = null) => {
-    const result = await createShareLink(documentId, token);
-    
-    if (result.success) {
-        try {
-            await navigator.clipboard.writeText(result.shareUrl);
-            
-            // Usar toast se disponível, senão usar feedback no botão
-            if (showToast) {
-                showToast(`Link copiado! ${result.shareUrl}`, 'success', 4000);
-            } else {
-                // Fallback: feedback visual no botão (mantido para compatibilidade)
-                const button = document.querySelector(`[data-doc-id="${documentId}"] .copy-btn`);
-                if (button) {
-                    const originalHTML = button.innerHTML;
-                    const originalClass = button.className;
-                    
-                    button.innerHTML = '<span>✅</span>Copiado!';
-                    button.className = originalClass + ' success';
-                    
-                    setTimeout(() => {
-                        button.innerHTML = originalHTML;
-                        button.className = originalClass;
-                    }, 2500);
-                }
-            }
-            
-            console.log('✅ Link copiado:', result.shareUrl);
-            return { success: true, url: result.shareUrl };
-            
-        } catch (clipboardError) {
-            console.error('Erro ao copiar para clipboard:', clipboardError);
-            
-            if (showToast) {
-                showToast('Erro ao copiar. Link: ' + result.shareUrl, 'warning', 6000);
-            } else {
-                // Fallback: mostrar prompt para copiar manualmente
-                prompt('Copie este link:', result.shareUrl);
-            }
-            return { success: true, url: result.shareUrl };
-        }
-    } else {
-        if (showToast) {
-            showToast('Erro ao criar link de compartilhamento: ' + result.error, 'error', 5000);
-        } else {
-            alert('Erro ao criar link de compartilhamento: ' + result.error);
-        }
-        return { success: false, error: result.error };
-    }
-};*/
 
 // Função para redirecionar para link compartilhado
 export const openShareLink = (shortname) => {
